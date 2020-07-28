@@ -8,7 +8,9 @@
   "dependencies": {
     "@types/better-sqlite3": "^5.4.0",
     "@types/node": "^14.0.26",
-    "better-sqlite3": "^7.1.0",
+    "knex": "^0.21.2",
+    "objection": "^2.2.2",
+    "sqlite3": "^5.0.0",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.7"
   }
