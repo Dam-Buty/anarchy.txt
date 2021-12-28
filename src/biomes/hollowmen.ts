@@ -1,4 +1,4 @@
-import { fill } from "../utils";
+import { fill } from "../lib/utils";
 
 export const ambiance = [...fill(2).of("𐂷"), ...fill(20).of("."), ...fill(2).of("𐃦"), ...fill(1).of("𐃀")];
 

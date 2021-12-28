@@ -1,7 +1,7 @@
 import SimplexNoise from "simplex-noise";
 import { Biome } from "./biome";
-import { structureThreshold } from "./constants";
-import { chooseWithNoise } from "./utils";
+import { structureThreshold } from "../lib/constants";
+import { chooseWithNoise } from "../lib/utils";
 
 const pathModel = " ";
 

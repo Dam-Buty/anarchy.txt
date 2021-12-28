@@ -3,7 +3,7 @@ import murmurhash from "murmurhash";
 import SimplexNoise from "simplex-noise";
 import { Cell } from "./cell";
 import { Chunk, createChunk, getCell } from "./chunk";
-import { chunkCoordinates, coord, Coords, createMatrix } from "./utils";
+import { chunkCoordinates, coord, Coords, createMatrix } from "../lib/utils";
 
 export type Map = {
   seed: string;

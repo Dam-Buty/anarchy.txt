@@ -6,9 +6,9 @@ import chalk from "chalk";
 
 import SimplexNoise = require("simplex-noise");
 
-import { txt, rares, ambiance } from "./biomes/hollowmen";
-import { chunkHeight, chunkWidth, structureThreshold } from "./constants";
-import { chunkCoordinates, coord, createMatrix } from "./utils";
+import { txt, rares, ambiance } from "../biomes/hollowmen";
+import { chunkHeight, chunkWidth, structureThreshold } from "../lib/constants";
+import { chunkCoordinates, coord, createMatrix } from "../lib/utils";
 import { Cell, createCell } from "./cell";
 import { createBiome } from "./biome";
 
