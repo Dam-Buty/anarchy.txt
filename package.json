@@ -1,20 +1,32 @@
 {
   "name": "anarchy.txt",
   "version": "1.0.0",
-  "description": "A collaborative PVP text file",
+  "description": "A Massively Multiplayer PVP text file",
   "main": "dist/index.js",
   "scripts": {
     "migrate": "knex migrate:latest",
-    "start": "yarn migrate && ts-node app"
+    "start": "tsnd src"
   },
   "author": "Damien Buty <dam.buty@gmail.com>",
   "license": "MIT",
-  "dependencies": {
+  "devDependencies": {
+    "@types/lodash": "^4.14.178",
     "@types/node": "^14.0.26",
-    "knex": "^0.21.2",
-    "objection": "^2.2.2",
-    "sqlite3": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.8.0",
+    "@typescript-eslint/parser": "^5.8.0",
+    "eslint": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.5.1",
     "ts-node": "^8.10.2",
+    "ts-node-dev": "^1.0.0-pre.56",
     "typescript": "^3.9.7"
+  },
+  "dependencies": {
+    "@types/seedrandom": "^3.0.1",
+    "chalk": "^4.0.0",
+    "lodash": "^4.17.21",
+    "murmurhash": "^2.0.0",
+    "seedrandom": "^3.0.5",
+    "simplex-noise": "^3.0.0"
   }
 }

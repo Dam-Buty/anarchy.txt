@@ -3,10 +3,10 @@
       "outDir": "./dist",
       "target": "ES2020",
       "esModuleInterop": true,
-      "module": "commonjs"
+      "module": "commonjs",
+      "resolveJsonModule":true
   },
   "include": [
       "./src/**/*",
-      "./typings/**/*.ts"
   ]
 }

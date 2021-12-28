@@ -1,0 +1,12 @@
+{
+  "sqltools.connections": [
+    {
+      "database": "${workspaceFolder:anarchy.txt}/database.db",
+      "driver": "SQLite",
+      "group": "anarchytxt",
+      "name": "dev",
+      "previewLimit": 50
+    }
+  ],
+  "sqltools.useNodeRuntime": true
+}
