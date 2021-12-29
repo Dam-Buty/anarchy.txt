@@ -18,8 +18,15 @@ let [playerX, playerY] = player.position;
 
 const map = createMap(worldSeed, { textBias });
 
+function formatCell(cell: Cell): string {
+  if (cell.value > 0.9) {
+    return chalk.bold(chalk.red(cell.letter));
+  }
+  return cell.letter;
+}
+
 function formatLine(cells: Cell[]): string {
-  return cells.map((cell) => cell?.letter ?? chalk.red("X")).join(" ");
+  return cells.map((cell) => (cell ? formatCell(cell) : chalk.red("X"))).join(" ");
 }
 
 function render(playerX: number, playerY: number) {
@@ -29,8 +36,9 @@ function render(playerX: number, playerY: number) {
   const viewport = getView(map, { x: viewportX, y: viewportY, width: viewportWidth, height: viewportHeight });
 
   // Display the viewport
-  // console.clear();
+  console.clear();
 
+  console.log(viewportX, viewportY);
   console.log(viewport.map(formatLine).join("\n"));
   console.log(playerX, playerY);
   // console.log(`Needed chunks : ${neededChunks.map((chunk) => chunk.join(",")).join(" - ")}`);

@@ -17,18 +17,10 @@ export function chooseWithNoise<T>(array: T[], value: number) {
   return array[Math.round(normalizedValue * (array.length - 1))];
 }
 
-export function chunkCoordinates(
-  x: number,
-  y: number
-): { chunkX: number; chunkY: number; cellXInChunk: number; cellYInChunk: number } {
+export function chunkCoordinates(x: number, y: number): [number, number] {
   const chunkX = Math.floor(x / chunkWidth);
   const chunkY = Math.floor(y / chunkHeight);
-  return {
-    chunkX,
-    chunkY,
-    cellXInChunk: x - chunkX,
-    cellYInChunk: y - chunkY,
-  };
+  return [chunkX, chunkY];
 }
 
 export function coord(value: number) {

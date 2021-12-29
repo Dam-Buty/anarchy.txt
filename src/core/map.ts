@@ -1,4 +1,3 @@
-import { chain } from "lodash";
 import murmurhash from "murmurhash";
 import SimplexNoise from "simplex-noise";
 import { Cell } from "./cell";
@@ -13,6 +12,8 @@ export type Map = {
   textNoise: SimplexNoise;
 
   chunks: Record<symbol, Record<symbol, Chunk>>;
+
+  logs: string[];
 };
 
 export function combineSeeds(seed: string, bias: string) {
@@ -28,7 +29,7 @@ export function createMap(seed: string, { textBias }: { textBias: string }): Map
   const noise = new SimplexNoise(seed);
   const textNoise = new SimplexNoise(combineSeeds(seed, textBias));
 
-  return { seed, noise, textBias, textNoise, chunks: {} };
+  return { seed, noise, textBias, textNoise, chunks: {}, logs: [] };
 }
 
 export function getOrGenerateChunk(map: Map, { x, y }: { x: number; y: number }): Chunk {
@@ -37,6 +38,7 @@ export function getOrGenerateChunk(map: Map, { x, y }: { x: number; y: number })
       map.chunks[coord(y)] = {};
     }
     if (!map.chunks[coord(y)][coord(x)]) {
+      // mapLog(map, JSON.stringify({ x, y }));
       map.chunks[coord(y)][coord(x)] = createChunk({ x, y }, { noise: map.noise, textNoise: map.textNoise });
     }
     return map.chunks[coord(y)][coord(x)];
@@ -46,7 +48,7 @@ export function getOrGenerateChunk(map: Map, { x, y }: { x: number; y: number })
 }
 
 export function getCellFromChunk(map: Map, { x, y }: { x: number; y: number }): Cell {
-  const { chunkX, chunkY } = chunkCoordinates(x, y);
+  const [chunkX, chunkY] = chunkCoordinates(x, y);
 
   const chunk = getOrGenerateChunk(map, { x: chunkX, y: chunkY });
 
@@ -58,4 +60,8 @@ export function getView(
   { x, y, width, height }: { x: number; y: number; width: number; height: number }
 ): Cell[][] {
   return createMatrix(width, height, (cellX, cellY) => getCellFromChunk(map, { x: x + cellX, y: y + cellY }));
+}
+
+export function mapLog(map: Map, log: any) {
+  map.logs.push(log);
 }
