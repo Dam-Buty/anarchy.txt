@@ -12,8 +12,13 @@ export function fill(size: number) {
   };
 }
 
-export function chooseWithNoise<T>(array: T[], value: number) {
-  const normalizedValue = (value + 1) / 2;
+export type NormalizeOptions = {
+  min: number;
+  max: number;
+};
+
+export function chooseWithNoise<T>(array: T[], value: number, { min, max }: NormalizeOptions = { min: -1, max: 1 }) {
+  const normalizedValue = (value - min) / (max - min);
   return array[Math.round(normalizedValue * (array.length - 1))];
 }
 
@@ -29,7 +34,7 @@ export function coord(value: number) {
 
 export type Coords = [number, number];
 
-export function createMatrix<T>(width: number, height: number, callback: (x, y) => T): T[][] {
+export function createMatrix<T>(width: number, height: number, callback: (x: number, y: number) => T): T[][] {
   return Array(height)
     .fill(null)
     .map((_, cellY) =>
@@ -37,4 +42,16 @@ export function createMatrix<T>(width: number, height: number, callback: (x, y) 
         .fill(null)
         .map((__, cellX) => callback(cellX, cellY))
     );
+}
+
+export type Rectangle = { corner: Coords; width: number; height: number };
+
+export function isInRectangle(
+  [pointX, pointY]: Coords,
+  { corner: [rectangleX, rectangleY], width, height }: Rectangle
+) {
+  const maxX = rectangleX + width - 1;
+  const maxY = rectangleY + height - 1;
+
+  return pointX >= rectangleX && pointX <= maxX && pointY >= rectangleY && pointY <= maxY;
 }

@@ -1,39 +1,34 @@
 import SimplexNoise from "simplex-noise";
 import { Biome } from "./biome";
-import { structureThreshold } from "../lib/constants";
-import { chooseWithNoise } from "../lib/utils";
+import { structureValueThreshold } from "../lib/constants";
+import { chooseWithNoise, NormalizeOptions } from "../lib/utils";
 
-const pathModel = " ";
+export const pathModel = " ";
 
 export type Cell = {
   x: number;
   y: number;
 
-  letter: string;
   value: number;
+  letterValue: number;
+
+  letter: string;
+
+  isAlphabet: boolean;
+  isAlphabetOrRare: boolean;
+  isRare: boolean;
+  isAmbiance: boolean;
+  isPath: boolean;
+
+  isStructureCandidate: boolean;
+  isPartOfStructure: boolean;
 
   biome: Biome;
 };
 
-export function isAlphabet({ biome, letter }: Cell) {
-  return biome.uniqueAlphabet.includes(letter);
-}
-
-export function isAlphabetOrRare({ biome, letter }: Cell) {
-  return biome.alphabet.includes(letter) || Object.values(biome.rares).includes(letter);
-}
-
-export function isRare({ biome, letter }: Cell) {
-  return Object.values(biome.rares).includes(letter);
-}
-
-export function isAmbiance({ biome, letter }: Cell) {
-  return biome.ambiance.includes(letter);
-}
-
-export function isPath({ letter }: Cell) {
-  return letter === pathModel;
-}
+export const pathNormalizer: NormalizeOptions = { min: -1, max: 0 };
+export const ambianceNormalizer: NormalizeOptions = { min: 0, max: 0.4 };
+export const letterNormalizer: NormalizeOptions = { min: 0.4, max: 1 };
 
 export function createCell(
   { x, y, biome }: Pick<Cell, "x" | "y" | "biome">,
@@ -55,8 +50,19 @@ export function createCell(
   return {
     x,
     y,
+
     biome,
     value,
+    letterValue,
     letter,
+
+    isAlphabet: biome.uniqueAlphabet.includes(letter),
+    isAlphabetOrRare: biome.alphabet.includes(letter) || Object.values(biome.rares).includes(letter),
+    isRare: Object.values(biome.rares).includes(letter),
+    isAmbiance: biome.ambiance.includes(letter),
+    isPath: letter === pathModel,
+
+    isStructureCandidate: value > structureValueThreshold,
+    isPartOfStructure: false,
   };
 }

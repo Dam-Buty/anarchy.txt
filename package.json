@@ -27,6 +27,7 @@
     "lodash": "^4.17.21",
     "murmurhash": "^2.0.0",
     "seedrandom": "^3.0.5",
-    "simplex-noise": "^3.0.0"
+    "simplex-noise": "^3.0.0",
+    "wcwidth": "^1.0.1"
   }
 }

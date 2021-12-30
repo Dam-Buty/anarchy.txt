@@ -1,3 +1,4 @@
+import wcwidth from "wcwidth";
 import readline from "readline";
 import * as player from "../player.json";
 import { Cell } from "./core/cell";
@@ -19,7 +20,7 @@ let [playerX, playerY] = player.position;
 const map = createMap(worldSeed, { textBias });
 
 function formatCell(cell: Cell): string {
-  if (cell.value > 0.9) {
+  if (cell.isPartOfStructure) {
     return chalk.bold(chalk.red(cell.letter));
   }
   return cell.letter;

@@ -9,9 +9,13 @@ export const rares = {
   d: "ᗥ",
   e: "ᘍ",
   f: "ʄ",
+  h: "ʯ",
   j: "ǰ",
   m: "ᙢ",
+  o: "ㆆ",
+  p: "Ᵽ",
   s: "ᔖ",
+  u: "u𑨶",
 };
 
 export const txt = `Mistah Kurtz he dead
