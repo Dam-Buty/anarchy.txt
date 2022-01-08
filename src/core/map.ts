@@ -4,12 +4,15 @@ import { Cell } from "./cell";
 import { Chunk, createChunk, getCell } from "./chunk";
 import { chunkCoordinates, coord, Coords, createMatrix } from "../lib/utils";
 
-export type Map = {
-  seed: string;
-  noise: SimplexNoise;
+export type NoiseCollection = {
+  base: SimplexNoise;
+  text: SimplexNoise;
+  technology: SimplexNoise;
+  magic: SimplexNoise;
+};
 
-  textBias: string;
-  textNoise: SimplexNoise;
+export type Map = {
+  noise: NoiseCollection;
 
   chunks: Record<symbol, Record<symbol, Chunk>>;
 
@@ -25,25 +28,38 @@ export function combineSeeds(seed: string, bias: string) {
     .join("");
 }
 
-export function createMap(seed: string, { textBias }: { textBias: string }): Map {
-  const noise = new SimplexNoise(seed);
-  const textNoise = new SimplexNoise(combineSeeds(seed, textBias));
+export function createMap(
+  seed: string,
+  { textBias, technologyBias, magicBias }: { textBias: string; technologyBias: string; magicBias: string }
+): Map {
+  const base = new SimplexNoise(seed);
+  const text = new SimplexNoise(combineSeeds(seed, textBias));
+  const technology = new SimplexNoise(combineSeeds(seed, technologyBias));
+  const magic = new SimplexNoise(combineSeeds(seed, magicBias));
 
-  return { seed, noise, textBias, textNoise, chunks: {}, logs: [] };
+  return { noise: { base, text, technology, magic }, chunks: {}, logs: [] };
 }
 
 export function getOrGenerateChunk(map: Map, { x, y }: { x: number; y: number }): Chunk {
+  // if (!map.chunks[coord(y)]) {
+  //   map.chunks[coord(y)] = {};
+  // }
+  // if (!map.chunks[coord(y)][coord(x)]) {
+  //   // mapLog(map, JSON.stringify({ x, y }));
+  //   map.chunks[coord(y)][coord(x)] = createChunk({ x, y }, { noise: map.noise, textNoise: map.textNoise });
+  // }
+  // return map.chunks[coord(y)][coord(x)];
   try {
     if (!map.chunks[coord(y)]) {
       map.chunks[coord(y)] = {};
     }
     if (!map.chunks[coord(y)][coord(x)]) {
       // mapLog(map, JSON.stringify({ x, y }));
-      map.chunks[coord(y)][coord(x)] = createChunk({ x, y }, { noise: map.noise, textNoise: map.textNoise });
+      map.chunks[coord(y)][coord(x)] = createChunk({ x, y }, map.noise);
     }
     return map.chunks[coord(y)][coord(x)];
   } catch (e) {
-    console.error(x, y, map.chunks[coord(y)]);
+    console.error(e);
   }
 }
 

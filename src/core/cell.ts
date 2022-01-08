@@ -1,7 +1,8 @@
 import SimplexNoise from "simplex-noise";
-import { Biome } from "./biome";
+import { Biome, getBiome } from "./biome";
 import { structureValueThreshold } from "../lib/constants";
 import { chooseWithNoise, NormalizeOptions } from "../lib/utils";
+import { NoiseCollection } from "./map";
 
 export const pathModel = " ";
 
@@ -26,25 +27,20 @@ export type Cell = {
   biome: Biome;
 };
 
-export const pathNormalizer: NormalizeOptions = { min: -1, max: 0 };
-export const ambianceNormalizer: NormalizeOptions = { min: 0, max: 0.4 };
-export const letterNormalizer: NormalizeOptions = { min: 0.4, max: 1 };
+export function createCell({ x, y }: Pick<Cell, "x" | "y">, noise: NoiseCollection): Cell {
+  const biome = getBiome({ x, y }, noise);
 
-export function createCell(
-  { x, y, biome }: Pick<Cell, "x" | "y" | "biome">,
-  { noise, textNoise }: { noise: SimplexNoise; textNoise: SimplexNoise }
-): Cell {
-  const value = noise.noise2D(x / 16, y / 16);
-  const letterValue = textNoise.noise2D(x / 16, y / 16);
+  const value = noise.base.noise2D(x / biome.parameters.scaleFactor, y / biome.parameters.scaleFactor);
+  const letterValue = noise.text.noise2D(x / biome.parameters.scaleFactor, y / biome.parameters.scaleFactor);
 
   const letter = (() => {
-    if (value < 0) {
+    if (value < biome.parameters.pathCeiling) {
       return pathModel;
     }
-    if (value < 0.4) {
-      return chooseWithNoise(biome.ambiance, letterValue);
+    if (value < biome.parameters.ambianceCeiling) {
+      return chooseWithNoise(biome.alphabet.ambiance, letterValue);
     }
-    return chooseWithNoise(biome.alphabet, letterValue);
+    return chooseWithNoise(biome.alphabet.full, letterValue);
   })();
 
   return {
@@ -56,10 +52,10 @@ export function createCell(
     letterValue,
     letter,
 
-    isAlphabet: biome.uniqueAlphabet.includes(letter),
-    isAlphabetOrRare: biome.alphabet.includes(letter) || Object.values(biome.rares).includes(letter),
-    isRare: Object.values(biome.rares).includes(letter),
-    isAmbiance: biome.ambiance.includes(letter),
+    isAlphabet: biome.alphabet.unique.includes(letter),
+    isAlphabetOrRare: biome.alphabet.unique.includes(letter) || Object.values(biome.alphabet.rares).includes(letter),
+    isRare: Object.values(biome.alphabet.rares).includes(letter),
+    isAmbiance: biome.alphabet.ambiance.includes(letter),
     isPath: letter === pathModel,
 
     isStructureCandidate: value > structureValueThreshold,

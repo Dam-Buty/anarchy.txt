@@ -6,7 +6,7 @@ export async function sleep(ms: number) {
 
 export function fill(size: number) {
   return {
-    of(value: any) {
+    of<T>(value: T): T[] {
       return Array(size).fill(value);
     },
   };
@@ -54,4 +54,9 @@ export function isInRectangle(
   const maxY = rectangleY + height - 1;
 
   return pointX >= rectangleX && pointX <= maxX && pointY >= rectangleY && pointY <= maxY;
+}
+
+export function getRectangle<T>(array: T[][], rectangle: Rectangle): T[][] {
+  const [x, y] = rectangle.corner;
+  return array.slice(y, y + rectangle.height).map((line) => line.slice(x, x + rectangle.width));
 }

@@ -9,6 +9,8 @@ const chalk = require("chalk");
 const playerModel = ["𐛩", "𐛪", "𐛫"];
 const worldSeed = "with the absolute heart of the poem of life butchered out of their own bodies";
 const textBias = "GOOD TO EAT a thousand years";
+const technologyBias = "the world of the electron and the switch, the beauty of the baud";
+const magicBias = "Lips that would kiss Form prayers to broken stone";
 
 const viewportWidth = 60;
 const viewportHeight = 40;
@@ -17,7 +19,7 @@ const playerYInViewport = 20;
 
 let [playerX, playerY] = player.position;
 
-const map = createMap(worldSeed, { textBias });
+const map = createMap(worldSeed, { textBias, technologyBias, magicBias });
 
 function formatCell(cell: Cell): string {
   if (cell.isPartOfStructure) {
@@ -39,9 +41,9 @@ function render(playerX: number, playerY: number) {
   // Display the viewport
   console.clear();
 
-  console.log(viewportX, viewportY);
+  console.log("Viewport", viewportX, viewportY);
   console.log(viewport.map(formatLine).join("\n"));
-  console.log(playerX, playerY);
+  console.log("Player", playerX, playerY);
   // console.log(`Needed chunks : ${neededChunks.map((chunk) => chunk.join(",")).join(" - ")}`);
   // console.log(`Generated chunks : ${chunksToGenerate.map((chunk) => chunk.join(",")).join(" - ")}`);
 }

@@ -4,7 +4,6 @@
   "description": "A Massively Multiplayer PVP text file",
   "main": "dist/index.js",
   "scripts": {
-    "migrate": "knex migrate:latest",
     "start": "tsnd src"
   },
   "author": "Damien Buty <dam.buty@gmail.com>",
