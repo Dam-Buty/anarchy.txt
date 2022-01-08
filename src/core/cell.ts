@@ -10,6 +10,8 @@ export type Cell = {
   x: number;
   y: number;
 
+  health: number;
+
   value: number;
   letterValue: number;
 
@@ -26,6 +28,37 @@ export type Cell = {
 
   biome: Biome;
 };
+
+export function damage(cell: Cell) {
+  if (cell.isPath) {
+    return;
+  }
+  if (cell.isAmbiance) {
+    cell.health -= 34;
+  }
+  if (cell.isAlphabet) {
+    cell.health -= 25;
+  }
+  if (cell.isRare) {
+    cell.health -= 20;
+  }
+  if (cell.health <= 0) {
+    cell.health = 0;
+    cell.letter = " ";
+    reflag(cell);
+  }
+}
+
+export function reflag(cell: Cell) {
+  const { biome, letter } = cell;
+
+  cell.isAlphabet = biome.alphabet.unique.includes(letter);
+  cell.isAlphabetOrRare =
+    biome.alphabet.unique.includes(letter) || Object.values(biome.alphabet.rares).includes(letter);
+  cell.isRare = Object.values(biome.alphabet.rares).includes(letter);
+  cell.isAmbiance = biome.alphabet.ambiance.includes(letter);
+  cell.isPath = letter === pathModel;
+}
 
 export function createCell({ x, y }: Pick<Cell, "x" | "y">, noise: NoiseCollection): Cell {
   const biome = getBiome({ x, y }, noise);
@@ -46,6 +79,8 @@ export function createCell({ x, y }: Pick<Cell, "x" | "y">, noise: NoiseCollecti
   return {
     x,
     y,
+
+    health: 100,
 
     biome,
     value,

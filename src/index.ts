@@ -1,10 +1,11 @@
 import fs from "fs";
 import readline from "readline";
+import chalk from "chalk";
 import * as player from "../player.json";
-import { Cell } from "./core/cell";
-import { createMap, getView } from "./core/map";
+import { Cell, damage } from "./core/cell";
+import { createMap, getCellFromChunk, getView } from "./core/map";
 
-const chalk = require("chalk");
+// const chalk = require("chalk");
 
 const playerModel = ["𐛩", "𐛪", "𐛫"];
 const worldSeed = "with the absolute heart of the poem of life butchered out of their own bodies";
@@ -29,14 +30,31 @@ function formatCell(cell: Cell): string {
 }
 
 function formatLine(cells: Cell[]): string {
-  return cells.map((cell) => (cell ? formatCell(cell) : chalk.red("X"))).join(" ");
+  return cells
+    .map((cell) => {
+      if (!cell) {
+        return chalk.red("X");
+      }
+      if (cell.x === playerX && cell.y === playerY) {
+        return playerModel[playerX % 3];
+      }
+      return formatCell(cell);
+    })
+    .join(" ");
 }
 
-function render(playerX: number, playerY: number) {
+let viewport: Cell[][] = [];
+
+function refresh() {
   const viewportX = playerX - playerXInViewport;
   const viewportY = playerY - playerYInViewport;
 
-  const viewport = getView(map, { x: viewportX, y: viewportY, width: viewportWidth, height: viewportHeight });
+  viewport = getView(map, { x: viewportX, y: viewportY, width: viewportWidth, height: viewportHeight });
+}
+
+function render() {
+  const viewportX = playerX - playerXInViewport;
+  const viewportY = playerY - playerYInViewport;
 
   // Display the viewport
   console.clear();
@@ -44,30 +62,55 @@ function render(playerX: number, playerY: number) {
   console.log("Viewport", viewportX, viewportY);
   console.log(viewport.map(formatLine).join("\n"));
   console.log("Player", playerX, playerY);
-  // console.log(`Needed chunks : ${neededChunks.map((chunk) => chunk.join(",")).join(" - ")}`);
-  // console.log(`Generated chunks : ${chunksToGenerate.map((chunk) => chunk.join(",")).join(" - ")}`);
 }
 
-render(playerX, playerY);
+refresh();
+render();
 
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
 
+const directions = ["up", "down", "left", "right"] as const;
+type Direction = typeof directions[number];
+
+function neighbor(direction: Direction): { x: number; y: number } {
+  const neighbors: Record<Direction, { x: number; y: number }> = {
+    up: { x: 0, y: -1 },
+    down: { x: 0, y: 1 },
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 },
+  };
+  const neighbor = neighbors[direction];
+  return { x: playerX + neighbor.x, y: playerY + neighbor.y };
+}
+
+function move(direction: Direction) {
+  const target = getCellFromChunk(map, neighbor(direction));
+
+  if (target.isPath || target.letter === " ") {
+    playerX = target.x;
+    playerY = target.y;
+  }
+}
+
+function interact(direction: Direction) {
+  const target = getCellFromChunk(map, neighbor(direction));
+  damage(target);
+}
+
 process.stdin.on("keypress", (str, key) => {
-  // console.log(key);
+  if (directions.includes(key.name)) {
+    if (key.ctrl) {
+      interact(key.name);
+    } else {
+      move(key.name);
+    }
+    refresh();
+    render();
+    return;
+  }
+  console.log(key);
   switch (key.name) {
-    case "up":
-      playerY--;
-      break;
-    case "down":
-      playerY++;
-      break;
-    case "left":
-      playerX--;
-      break;
-    case "right":
-      playerX++;
-      break;
     case "c":
       if (key.ctrl) {
         process.exit(0);
@@ -78,5 +121,4 @@ process.stdin.on("keypress", (str, key) => {
         fs.writeFileSync("./player.json", JSON.stringify({ position }, null, 2));
       }
   }
-  render(playerX, playerY);
 });

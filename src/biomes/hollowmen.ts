@@ -3,7 +3,7 @@ import { fill } from "../lib/utils";
 
 export const hollowmen: BiomeSpec = {
   parameters: {
-    scaleFactor: 18,
+    scaleFactor: 24,
 
     pathCeiling: 0,
     ambianceCeiling: 0.35,

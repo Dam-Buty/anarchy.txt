@@ -1,7 +1,7 @@
 import { chain, chunk, flatMap, sumBy } from "lodash";
 import { chunkHeight, chunkWidth, structureMargin, structureScoreThreshold } from "../lib/constants";
 import { chooseWithNoise, Coords, createMatrix, fill, getRectangle, isInRectangle, Rectangle } from "../lib/utils";
-import { Cell, pathModel } from "./cell";
+import { Cell, pathModel, reflag } from "./cell";
 
 export function addStructures(cells: Cell[][], structureCandidates: Coords[]) {
   // Generate structures
@@ -36,15 +36,22 @@ export function addStructures(cells: Cell[][], structureCandidates: Coords[]) {
         [5, 7],
         [7, 5],
         [9, 6],
+        [10, 8],
       ];
 
-      // For each remaining candidate we'll try every possible structure, and pick the one with the highest coverage score
+      // For each remaining candidate we'll try every possible structure, and pick the one with the highest coverage ratio
       const possibleStructure = chain(possibleStructures)
         .map(([width, height]) => {
           const corner: Coords = [x - Math.floor(width / 2), y - Math.floor(height / 2)];
           const rectangle = getRectangle(cells, { corner, width, height });
 
-          return { width, height, corner, rectangle, score: sumBy(flatMap(rectangle), (cell) => cell.value) };
+          return {
+            width,
+            height,
+            corner,
+            rectangle,
+            score: sumBy(flatMap(rectangle), (cell) => cell.value),
+          };
         })
         .maxBy("score")
         .value();
@@ -189,6 +196,8 @@ export function drawStructure(cells: Cell[][], text: string, rectangle: Rectangl
       }
       return chooseWithNoise(possibleLetters, cell.value, cell.biome.normalizers.letter);
     })();
+
+    reflag(cell);
 
     return cell;
   });
