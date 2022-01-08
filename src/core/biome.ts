@@ -14,6 +14,7 @@ export type Biome = {
   txt: {
     raw: string;
     lines: string[];
+    structures: string[];
   };
 
   alphabet: {
@@ -37,6 +38,7 @@ export type BiomeSpec = {
 
   ambiance: string[];
   rares: Record<string, string>;
+  structures: string[];
   txt: string;
 };
 
@@ -56,6 +58,7 @@ function parseBiomeSpec(biomeSpec: BiomeSpec): Biome {
     txt: {
       raw: rawTxt,
       lines,
+      structures: biomeSpec.structures,
     },
     alphabet: {
       full: fullAlphabet,

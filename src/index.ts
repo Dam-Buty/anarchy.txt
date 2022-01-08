@@ -1,4 +1,4 @@
-import wcwidth from "wcwidth";
+import fs from "fs";
 import readline from "readline";
 import * as player from "../player.json";
 import { Cell } from "./core/cell";
@@ -71,6 +71,11 @@ process.stdin.on("keypress", (str, key) => {
     case "c":
       if (key.ctrl) {
         process.exit(0);
+      }
+    case "s":
+      if (key.ctrl) {
+        const position = [playerX, playerY];
+        fs.writeFileSync("./player.json", JSON.stringify({ position }, null, 2));
       }
   }
   render(playerX, playerY);

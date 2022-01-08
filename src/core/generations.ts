@@ -54,7 +54,7 @@ export function addStructures(cells: Cell[][], structureCandidates: Coords[]) {
         // Chose structure
         const cell = cells[y][x];
 
-        const structure = chooseWithNoise(cell.biome.txt.lines, cell.letterValue);
+        const structure = chooseWithNoise(cell.biome.txt.structures, cell.letterValue);
 
         drawStructure(possibleStructure.rectangle, structure, {
           corner: possibleStructure.corner,
