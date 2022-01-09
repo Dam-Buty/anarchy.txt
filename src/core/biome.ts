@@ -1,4 +1,5 @@
 import { uniq } from "lodash";
+import { hacker } from "../biomes/hacker";
 import { hollowmen } from "../biomes/hollowmen";
 import { NormalizeOptions } from "../lib/utils";
 import { Cell } from "./cell";
@@ -79,7 +80,7 @@ function parseBiomeSpec(biomeSpec: BiomeSpec): Biome {
 
 const biomeCache = {
   howl: parseBiomeSpec(hollowmen),
-  hacker: parseBiomeSpec(hollowmen),
+  hacker: parseBiomeSpec(hacker),
   hollowmen: parseBiomeSpec(hollowmen),
   raven: parseBiomeSpec(hollowmen),
 };

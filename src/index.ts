@@ -1,13 +1,13 @@
 import fs from "fs";
 import readline from "readline";
 import chalk from "chalk";
-import * as player from "../player.json";
 import { Cell, damage } from "./core/cell";
 import { createMap, getCellFromChunk, getView } from "./core/map";
+import { addToInventory, createPlayer, playerModel } from "./core/player";
+import { sortBy } from "lodash";
 
 // const chalk = require("chalk");
 
-const playerModel = ["𐛩", "𐛪", "𐛫"];
 const worldSeed = "with the absolute heart of the poem of life butchered out of their own bodies";
 const textBias = "GOOD TO EAT a thousand years";
 const technologyBias = "the world of the electron and the switch, the beauty of the baud";
@@ -18,13 +18,24 @@ const viewportHeight = 40;
 const playerXInViewport = 20;
 const playerYInViewport = 20;
 
-let [playerX, playerY] = player.position;
-
 const map = createMap(worldSeed, { textBias, technologyBias, magicBias });
+const player = createPlayer();
 
 function formatCell(cell: Cell): string {
   if (cell.isPartOfStructure) {
-    return chalk.bold(chalk.red(cell.letter));
+    return chalk.bold(chalk.yellow(cell.letter));
+  }
+  if (cell.health === 0) {
+    return " ";
+  }
+  if (cell.health < 25) {
+    return chalk.bgRed(cell.letter);
+  }
+  if (cell.health < 50) {
+    return chalk.bgMagenta(cell.letter);
+  }
+  if (cell.health < 75) {
+    return chalk.bgGreen(cell.letter);
   }
   return cell.letter;
 }
@@ -35,8 +46,8 @@ function formatLine(cells: Cell[]): string {
       if (!cell) {
         return chalk.red("X");
       }
-      if (cell.x === playerX && cell.y === playerY) {
-        return playerModel[playerX % 3];
+      if (cell.x === player.x && cell.y === player.y) {
+        return playerModel[player.x % 3];
       }
       return formatCell(cell);
     })
@@ -46,22 +57,28 @@ function formatLine(cells: Cell[]): string {
 let viewport: Cell[][] = [];
 
 function refresh() {
-  const viewportX = playerX - playerXInViewport;
-  const viewportY = playerY - playerYInViewport;
+  const viewportX = player.x - playerXInViewport;
+  const viewportY = player.y - playerYInViewport;
 
   viewport = getView(map, { x: viewportX, y: viewportY, width: viewportWidth, height: viewportHeight });
 }
 
 function render() {
-  const viewportX = playerX - playerXInViewport;
-  const viewportY = playerY - playerYInViewport;
+  const viewportX = player.x - playerXInViewport;
+  const viewportY = player.y - playerYInViewport;
 
   // Display the viewport
-  console.clear();
+  // console.clear();
 
   console.log("Viewport", viewportX, viewportY);
   console.log(viewport.map(formatLine).join("\n"));
-  console.log("Player", playerX, playerY);
+  console.log("Player", player.x, player.y);
+  console.log(
+    "Inventory",
+    sortBy(player.inventory, (item) => item.letter)
+      .map((item) => `${item.letter} (${item.stack})`)
+      .join(" / ")
+  );
 }
 
 refresh();
@@ -73,6 +90,8 @@ process.stdin.setRawMode(true);
 const directions = ["up", "down", "left", "right"] as const;
 type Direction = typeof directions[number];
 
+const godMode = true;
+
 function neighbor(direction: Direction): { x: number; y: number } {
   const neighbors: Record<Direction, { x: number; y: number }> = {
     up: { x: 0, y: -1 },
@@ -81,21 +100,24 @@ function neighbor(direction: Direction): { x: number; y: number } {
     right: { x: 1, y: 0 },
   };
   const neighbor = neighbors[direction];
-  return { x: playerX + neighbor.x, y: playerY + neighbor.y };
+  return { x: player.x + neighbor.x, y: player.y + neighbor.y };
 }
 
 function move(direction: Direction) {
   const target = getCellFromChunk(map, neighbor(direction));
 
-  if (target.isPath || target.letter === " ") {
-    playerX = target.x;
-    playerY = target.y;
+  if (godMode || target.isPath || target.letter === " ") {
+    player.x = target.x;
+    player.y = target.y;
   }
 }
 
 function interact(direction: Direction) {
   const target = getCellFromChunk(map, neighbor(direction));
-  damage(target);
+  damage(player, target);
+  if (target.health === 0) {
+    move(direction);
+  }
 }
 
 process.stdin.on("keypress", (str, key) => {
@@ -117,7 +139,7 @@ process.stdin.on("keypress", (str, key) => {
       }
     case "s":
       if (key.ctrl) {
-        const position = [playerX, playerY];
+        const position = [player.x, player.y];
         fs.writeFileSync("./player.json", JSON.stringify({ position }, null, 2));
       }
   }

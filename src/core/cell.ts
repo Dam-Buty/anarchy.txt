@@ -3,6 +3,7 @@ import { Biome, getBiome } from "./biome";
 import { structureValueThreshold } from "../lib/constants";
 import { chooseWithNoise, NormalizeOptions } from "../lib/utils";
 import { NoiseCollection } from "./map";
+import { addToInventory, Player } from "./player";
 
 export const pathModel = " ";
 
@@ -29,8 +30,8 @@ export type Cell = {
   biome: Biome;
 };
 
-export function damage(cell: Cell) {
-  if (cell.isPath) {
+export function damage(player: Player, cell: Cell) {
+  if (cell.isPath || cell.letter === " ") {
     return;
   }
   if (cell.isAmbiance) {
@@ -43,6 +44,7 @@ export function damage(cell: Cell) {
     cell.health -= 20;
   }
   if (cell.health <= 0) {
+    addToInventory(player, cell.letter);
     cell.health = 0;
     cell.letter = " ";
     reflag(cell);
