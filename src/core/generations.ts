@@ -1,7 +1,7 @@
 import { chain, chunk, flatMap, sumBy } from "lodash";
 import { chunkHeight, chunkWidth, structureMargin, structureScoreThreshold } from "../lib/constants";
 import { chooseWithNoise, Coords, createMatrix, fill, getRectangle, isInRectangle, Rectangle } from "../lib/utils";
-import { Cell, pathModel, reflag } from "./cell";
+import { Cell, pathModel, setLetter } from "./cell";
 
 export function addStructures(cells: Cell[][], structureCandidates: Coords[]) {
   // Generate structures
@@ -37,6 +37,7 @@ export function addStructures(cells: Cell[][], structureCandidates: Coords[]) {
         [7, 5],
         [9, 6],
         [10, 8],
+        [14, 12],
       ];
 
       // For each remaining candidate we'll try every possible structure, and pick the one with the highest coverage ratio
@@ -187,17 +188,18 @@ export function drawStructure(cells: Cell[][], text: string, rectangle: Rectangl
     })();
 
     // Choose the letter with the right normalizer
-    cell.letter = (() => {
-      if (cell.isPath) {
-        return chooseWithNoise(possibleLetters, cell.value, cell.biome.normalizers.path);
-      }
-      if (cell.isAmbiance) {
-        return chooseWithNoise(possibleLetters, cell.value, cell.biome.normalizers.ambiance);
-      }
-      return chooseWithNoise(possibleLetters, cell.value, cell.biome.normalizers.letter);
-    })();
-
-    reflag(cell);
+    setLetter(
+      cell,
+      (() => {
+        if (cell.isPath) {
+          return chooseWithNoise(possibleLetters, cell.value, cell.biome.normalizers.path);
+        }
+        if (cell.isAmbiance) {
+          return chooseWithNoise(possibleLetters, cell.value, cell.biome.normalizers.ambiance);
+        }
+        return chooseWithNoise(possibleLetters, cell.value, cell.biome.normalizers.letter);
+      })()
+    );
 
     return cell;
   });

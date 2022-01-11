@@ -10,12 +10,14 @@ export type Player = {
     letter: string;
     stack: number;
   }[];
+  hand: number;
+  inInventory: boolean;
 };
 
 export function createPlayer(): Player {
   let [playerX, playerY] = player.position;
 
-  return { x: playerX, y: playerY, inventory: [] };
+  return { x: playerX, y: playerY, inventory: [], hand: 0, inInventory: false };
 }
 
 export function addToInventory(player: Player, letter: string) {

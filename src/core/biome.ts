@@ -6,9 +6,10 @@ import { Cell } from "./cell";
 import { NoiseCollection } from "./map";
 
 type GenerationParameters = {
-  scaleFactor: number;
+  scaleFactor: { x: number; y: number };
   pathCeiling: number;
   ambianceCeiling: number;
+  rareFloor: number;
 };
 
 export type Biome = {

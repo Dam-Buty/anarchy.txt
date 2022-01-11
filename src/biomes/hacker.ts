@@ -1,24 +1,43 @@
+import shuffle from "knuth-shuffle-seeded";
 import { BiomeSpec } from "../core/biome";
 import { fill } from "../lib/utils";
 
+function s<T>(array: T[]): T[] {
+  return shuffle(array, "Damn kids");
+}
+
 export const hacker: BiomeSpec = {
   parameters: {
-    scaleFactor: 70,
+    scaleFactor: { x: 30, y: 60 },
 
     pathCeiling: 0,
     ambianceCeiling: 0.35,
+    rareFloor: 0.9,
   },
 
   ambiance: [
-    ...fill(30).of("𑩁"),
-    ...fill(10).of("𑩂"),
-    ...fill(2).of("𑩃"),
-    ...fill(2).of("𑨿"),
-    ...fill(2).of("𑨭"),
-    ...fill(2).of("𑨋"),
-    ...fill(2).of("𑨮"),
-    ...fill(2).of("𑨫"),
-    ...fill(1).of("𑨕"),
+    ...s([...fill(50).of("𑩁"), ...fill(10).of("▿")]),
+    // ...fill(10).of("╭"),
+    // ...fill(10).of("╯"),
+    // ...fill(10).of("╮"),
+    // ...fill(10).of("╰"),
+    ...s([
+      ...fill(10).of("┌"),
+      ...fill(10).of("└"),
+      ...fill(10).of("┐"),
+      ...fill(10).of("┘"),
+      ...fill(10).of("│"),
+      ...fill(10).of("─"),
+    ]),
+    ...s([
+      ...fill(4).of("𐁗"),
+      ...fill(4).of("𑨿"),
+      ...fill(4).of("𑨭"),
+      ...fill(4).of("𑨋"),
+      ...fill(4).of("𑨮"),
+      ...fill(4).of("𑨫"),
+      ...fill(4).of("𑨕"),
+    ]),
   ],
   rares: {
     "a": "𑨓",

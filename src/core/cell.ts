@@ -4,6 +4,7 @@ import { structureValueThreshold } from "../lib/constants";
 import { chooseWithNoise, NormalizeOptions } from "../lib/utils";
 import { NoiseCollection } from "./map";
 import { addToInventory, Player } from "./player";
+import { isNull } from "lodash";
 
 export const pathModel = " ";
 
@@ -46,13 +47,13 @@ export function damage(player: Player, cell: Cell) {
   if (cell.health <= 0) {
     addToInventory(player, cell.letter);
     cell.health = 0;
-    cell.letter = " ";
-    reflag(cell);
+    setLetter(cell, " ");
   }
 }
 
-export function reflag(cell: Cell) {
-  const { biome, letter } = cell;
+export function setLetter(cell: Cell, letter: string, natural?: false) {
+  const { biome } = cell;
+  cell.letter = letter;
 
   cell.isAlphabet = biome.alphabet.unique.includes(letter);
   cell.isAlphabetOrRare =
@@ -60,13 +61,30 @@ export function reflag(cell: Cell) {
   cell.isRare = Object.values(biome.alphabet.rares).includes(letter);
   cell.isAmbiance = biome.alphabet.ambiance.includes(letter);
   cell.isPath = letter === pathModel;
+
+  cell.health = 100;
+}
+
+export function place(player: Player, cell: Cell): boolean {
+  if (!player.inInventory || player.inventory.length <= player.hand) {
+    return false;
+  }
+  setLetter(cell, player.inventory[player.hand].letter);
+
+  player.inventory[player.hand].stack--;
+  if (player.inventory[player.hand].stack <= 0) {
+    player.inventory.splice(player.hand, 1);
+    player.hand = Math.min(player.hand, player.inventory.length);
+  }
+
+  return true;
 }
 
 export function createCell({ x, y }: Pick<Cell, "x" | "y">, noise: NoiseCollection): Cell {
   const biome = getBiome({ x, y }, noise);
 
-  const value = noise.base.noise2D(x / biome.parameters.scaleFactor, y / biome.parameters.scaleFactor);
-  const letterValue = noise.text.noise2D(x / biome.parameters.scaleFactor, y / biome.parameters.scaleFactor);
+  const value = noise.base.noise2D(x / biome.parameters.scaleFactor.x, y / biome.parameters.scaleFactor.y);
+  const letterValue = noise.text.noise2D(x / biome.parameters.scaleFactor.x, y / biome.parameters.scaleFactor.y);
 
   const letter = (() => {
     if (value < biome.parameters.pathCeiling) {
@@ -75,7 +93,11 @@ export function createCell({ x, y }: Pick<Cell, "x" | "y">, noise: NoiseCollecti
     if (value < biome.parameters.ambianceCeiling) {
       return chooseWithNoise(biome.alphabet.ambiance, letterValue);
     }
-    return chooseWithNoise(biome.alphabet.full, letterValue);
+    const chosenLetter = chooseWithNoise(biome.alphabet.full, letterValue);
+    if (value > biome.parameters.rareFloor && biome.alphabet.rares[chosenLetter]) {
+      return biome.alphabet.rares[chosenLetter];
+    }
+    return chosenLetter;
   })();
 
   return {

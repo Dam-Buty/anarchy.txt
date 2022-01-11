@@ -29,7 +29,7 @@ export function chunkCoordinates(x: number, y: number): [number, number] {
 }
 
 export function coord(value: number) {
-  return Symbol.for(`${value}`);
+  return `${value}`;
 }
 
 export type Coords = [number, number];

@@ -14,7 +14,7 @@ export type NoiseCollection = {
 export type Map = {
   noise: NoiseCollection;
 
-  chunks: Record<symbol, Record<symbol, Chunk>>;
+  chunks: Record<string, Record<string, Chunk>>;
 
   logs: string[];
 };

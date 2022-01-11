@@ -1,12 +1,14 @@
 import fs from "fs";
 import readline from "readline";
 import chalk from "chalk";
-import { Cell, damage } from "./core/cell";
+import bigJson from "big-json";
+import { Cell, damage, place } from "./core/cell";
 import { createMap, getCellFromChunk, getView } from "./core/map";
 import { addToInventory, createPlayer, playerModel } from "./core/player";
-import { sortBy } from "lodash";
+import { isNull, sortBy } from "lodash";
+import { createMatrix } from "./lib/utils";
 
-// const chalk = require("chalk");
+const godMode = false;
 
 const worldSeed = "with the absolute heart of the poem of life butchered out of their own bodies";
 const textBias = "GOOD TO EAT a thousand years";
@@ -20,6 +22,8 @@ const playerYInViewport = 20;
 
 const map = createMap(worldSeed, { textBias, technologyBias, magicBias });
 const player = createPlayer();
+
+let cleanUp = true;
 
 function formatCell(cell: Cell): string {
   if (cell.isPartOfStructure) {
@@ -46,7 +50,7 @@ function formatLine(cells: Cell[]): string {
       if (!cell) {
         return chalk.red("X");
       }
-      if (cell.x === player.x && cell.y === player.y) {
+      if (cell.x === player.x && cell.y === player.y && !godMode) {
         return playerModel[player.x % 3];
       }
       return formatCell(cell);
@@ -68,15 +72,22 @@ function render() {
   const viewportY = player.y - playerYInViewport;
 
   // Display the viewport
-  // console.clear();
+  if (cleanUp) {
+    console.clear();
+  }
 
-  console.log("Viewport", viewportX, viewportY);
+  console.log("Viewport", viewportX, viewportY, cleanUp ? "clean" : "dirty");
   console.log(viewport.map(formatLine).join("\n"));
   console.log("Player", player.x, player.y);
   console.log(
     "Inventory",
-    sortBy(player.inventory, (item) => item.letter)
-      .map((item) => `${item.letter} (${item.stack})`)
+    player.inventory
+      .map((item, slot) => {
+        if (slot === player.hand && player.inInventory) {
+          return chalk.bgBlack(chalk.white(`${item.letter} (${item.stack})`));
+        }
+        return `${item.letter} (${item.stack})`;
+      })
       .join(" / ")
   );
 }
@@ -89,8 +100,6 @@ process.stdin.setRawMode(true);
 
 const directions = ["up", "down", "left", "right"] as const;
 type Direction = typeof directions[number];
-
-const godMode = true;
 
 function neighbor(direction: Direction): { x: number; y: number } {
   const neighbors: Record<Direction, { x: number; y: number }> = {
@@ -110,37 +119,77 @@ function move(direction: Direction) {
     player.x = target.x;
     player.y = target.y;
   }
+  refresh();
 }
 
 function interact(direction: Direction) {
   const target = getCellFromChunk(map, neighbor(direction));
-  damage(player, target);
+  if (target.isPath || target.letter === " ") {
+    if (!place(player, target)) {
+      move(direction);
+    }
+  } else {
+    damage(player, target);
+  }
   if (target.health === 0) {
     move(direction);
   }
 }
 
+function saveWorld() {
+  // Save the player first
+  fs.writeFileSync("./player.json", JSON.stringify({ position: [player.x, player.y] }, null, 2));
+
+  // Stream the world to disk
+  // const cells = createMatrix();
+  const stringifyStream = bigJson.createStringifyStream({ body: { chunks: map.chunks } });
+  const writeStream = fs.createWriteStream("./world.json");
+  stringifyStream.pipe(writeStream);
+}
+
 process.stdin.on("keypress", (str, key) => {
+  console.log(key);
+  // Toggle inventory mode
+  if (key.sequence === "<" && player.inventory.length > 0) {
+    player.inInventory = !player.inInventory;
+  }
+  // Handle directional keys
   if (directions.includes(key.name)) {
+    // Ctrl + Directional : interact
     if (key.ctrl) {
       interact(key.name);
     } else {
-      move(key.name);
+      // Navigate in inventory
+      if (player.inInventory) {
+        switch (key.name) {
+          case "left":
+            player.hand = Math.max(0, player.hand - 1);
+            break;
+          case "right":
+            player.hand = Math.min(player.inventory.length - 1, player.hand + 1);
+            break;
+        }
+      } else {
+        // Normal movement
+        move(key.name);
+      }
     }
-    refresh();
-    render();
-    return;
   }
-  console.log(key);
-  switch (key.name) {
-    case "c":
-      if (key.ctrl) {
-        process.exit(0);
-      }
-    case "s":
-      if (key.ctrl) {
-        const position = [player.x, player.y];
-        fs.writeFileSync("./player.json", JSON.stringify({ position }, null, 2));
-      }
+  // Handle CTRL+X hotkeys
+  if (key.ctrl) {
+    switch (key.name) {
+      case "c":
+        if (key.ctrl) {
+          process.exit(0);
+        }
+        break;
+      case "s":
+        saveWorld();
+        break;
+      case "n":
+        cleanUp = !cleanUp;
+        break;
+    }
   }
+  render();
 });
