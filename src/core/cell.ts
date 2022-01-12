@@ -51,7 +51,7 @@ export function damage(player: Player, cell: Cell) {
   }
 }
 
-export function setLetter(cell: Cell, letter: string, natural?: false) {
+export function setLetter(cell: Cell, letter: string) {
   const { biome } = cell;
   cell.letter = letter;
 

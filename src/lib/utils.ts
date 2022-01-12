@@ -44,6 +44,10 @@ export function createMatrix<T>(width: number, height: number, callback: (x: num
     );
 }
 
+export function mapMatrix<T, U>(matrix: T[][], callback: (element: T) => U): U[][] {
+  return matrix.map((line) => line.map((cell) => callback(cell)));
+}
+
 export type Rectangle = { corner: Coords; width: number; height: number };
 
 export function isInRectangle(

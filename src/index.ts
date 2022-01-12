@@ -5,8 +5,9 @@ import bigJson from "big-json";
 import { Cell, damage, place } from "./core/cell";
 import { createMap, getCellFromChunk, getView } from "./core/map";
 import { addToInventory, createPlayer, playerModel } from "./core/player";
-import { isNull, sortBy } from "lodash";
-import { createMatrix } from "./lib/utils";
+import { isNull, mapValues, sortBy } from "lodash";
+import { createMatrix, mapMatrix } from "./lib/utils";
+import { chunkHeight, chunkWidth } from "./lib/constants";
 
 const godMode = false;
 
@@ -23,7 +24,7 @@ const playerYInViewport = 20;
 const map = createMap(worldSeed, { textBias, technologyBias, magicBias });
 const player = createPlayer();
 
-let cleanUp = true;
+let cleanUp = false;
 
 function formatCell(cell: Cell): string {
   if (cell.isPartOfStructure) {
@@ -51,7 +52,7 @@ function formatLine(cells: Cell[]): string {
         return chalk.red("X");
       }
       if (cell.x === player.x && cell.y === player.y && !godMode) {
-        return playerModel[player.x % 3];
+        return playerModel[Math.abs(player.x % 3) + Math.abs(player.y % 3)];
       }
       return formatCell(cell);
     })
@@ -64,7 +65,9 @@ function refresh() {
   const viewportX = player.x - playerXInViewport;
   const viewportY = player.y - playerYInViewport;
 
+  console.time("getView");
   viewport = getView(map, { x: viewportX, y: viewportY, width: viewportWidth, height: viewportHeight });
+  console.timeEnd("getView");
 }
 
 function render() {
@@ -141,10 +144,17 @@ function saveWorld() {
   fs.writeFileSync("./player.json", JSON.stringify({ position: [player.x, player.y] }, null, 2));
 
   // Stream the world to disk
-  // const cells = createMatrix();
-  const stringifyStream = bigJson.createStringifyStream({ body: { chunks: map.chunks } });
-  const writeStream = fs.createWriteStream("./world.json");
-  stringifyStream.pipe(writeStream);
+  const saveData = mapValues(map.chunks, (chunkLine) =>
+    mapValues(chunkLine, (chunk) => {
+      return {
+        cells: mapMatrix(chunk.cells, ({ x, y, health, letter }) => ({ x, y, health, letter })),
+      };
+    })
+  );
+  fs.writeFileSync("./world.json", JSON.stringify({ chunks: saveData }, null, 2));
+  // const stringifyStream = bigJson.createStringifyStream({ body: { chunks: saveData } });
+  // const writeStream = fs.createWriteStream("./world.json");
+  // stringifyStream.pipe(writeStream);
 }
 
 process.stdin.on("keypress", (str, key) => {

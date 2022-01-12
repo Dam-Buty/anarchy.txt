@@ -1,14 +1,11 @@
+import chalk from "chalk";
 import shuffle from "knuth-shuffle-seeded";
 import { BiomeSpec } from "../core/biome";
 import { fill } from "../lib/utils";
 
-function s<T>(array: T[]): T[] {
-  return shuffle(array, "Damn kids");
-}
-
 export const hacker: BiomeSpec = {
   parameters: {
-    scaleFactor: { x: 30, y: 60 },
+    scaleFactor: { x: 24, y: 64 },
 
     pathCeiling: 0,
     ambianceCeiling: 0.35,
@@ -16,28 +13,23 @@ export const hacker: BiomeSpec = {
   },
 
   ambiance: [
-    ...s([...fill(50).of("𑩁"), ...fill(10).of("▿")]),
-    // ...fill(10).of("╭"),
-    // ...fill(10).of("╯"),
-    // ...fill(10).of("╮"),
-    // ...fill(10).of("╰"),
-    ...s([
+    [...fill(50).of("𑩁"), ...fill(10).of("▿")],
+    [
       ...fill(10).of("┌"),
       ...fill(10).of("└"),
       ...fill(10).of("┐"),
       ...fill(10).of("┘"),
       ...fill(10).of("│"),
       ...fill(10).of("─"),
-    ]),
-    ...s([
-      ...fill(4).of("𐁗"),
-      ...fill(4).of("𑨿"),
-      ...fill(4).of("𑨭"),
-      ...fill(4).of("𑨋"),
-      ...fill(4).of("𑨮"),
-      ...fill(4).of("𑨫"),
-      ...fill(4).of("𑨕"),
-    ]),
+    ],
+    [
+      ...fill(4).of(chalk.blue("𑨿")),
+      ...fill(4).of(chalk.blue("𑨭")),
+      ...fill(4).of(chalk.blue("𑨋")),
+      ...fill(4).of(chalk.blue("𑨮")),
+      ...fill(4).of(chalk.blue("𑨫")),
+      ...fill(4).of(chalk.blue("𑨕")),
+    ],
   ],
   rares: {
     "a": "𑨓",

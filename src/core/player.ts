@@ -1,6 +1,6 @@
 import * as player from "../../player.json";
 
-export const playerModel = ["𐛩", "𐛪", "𐛫"];
+export const playerModel = ["𐛩", "𐛪", "𐛧", "𐛫", "𐛪", "𐛧"];
 
 export type Player = {
   x: number;

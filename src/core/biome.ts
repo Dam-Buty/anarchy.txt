@@ -1,4 +1,5 @@
 import { uniq } from "lodash";
+import shuffle from "knuth-shuffle-seeded";
 import { hacker } from "../biomes/hacker";
 import { hollowmen } from "../biomes/hollowmen";
 import { NormalizeOptions } from "../lib/utils";
@@ -38,11 +39,16 @@ export type Biome = {
 export type BiomeSpec = {
   parameters: GenerationParameters;
 
-  ambiance: string[];
+  ambiance: string[][];
   rares: Record<string, string>;
   structures: string[];
   txt: string;
 };
+
+// This predictably shuffles the sub-arrays of the ambiance
+function shuffleArray<T>(array: T[]): T[] {
+  return shuffle(array, "Damn kids");
+}
 
 function parseBiomeSpec(biomeSpec: BiomeSpec): Biome {
   const rawTxt = biomeSpec.txt;
@@ -56,6 +62,11 @@ function parseBiomeSpec(biomeSpec: BiomeSpec): Biome {
   };
   const letterNormalizer = { min: biomeSpec.parameters.ambianceCeiling, max: 1 };
 
+  const ambiance: string[] = [];
+  biomeSpec.ambiance.forEach((ambianceBlock) => {
+    ambiance.push(...shuffleArray(ambianceBlock));
+  });
+
   const biome: Biome = {
     txt: {
       raw: rawTxt,
@@ -66,7 +77,7 @@ function parseBiomeSpec(biomeSpec: BiomeSpec): Biome {
       full: fullAlphabet,
       unique: uniq(fullAlphabet),
       rares: biomeSpec.rares,
-      ambiance: biomeSpec.ambiance,
+      ambiance,
     },
     normalizers: {
       path: pathNormalizer,

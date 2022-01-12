@@ -1,5 +1,11 @@
+import chalk from "chalk";
 import { BiomeSpec } from "../core/biome";
 import { fill } from "../lib/utils";
+
+// unused
+// [...fill(10).of("╭"), ...fill(10).of("╯"), ...fill(10).of("╮"), ...fill(10).of("╰")],
+//  ...fill(10).of("෴")
+// ...fill(4).of("𐁗"),
 
 export const hollowmen: BiomeSpec = {
   parameters: {
@@ -10,7 +16,11 @@ export const hollowmen: BiomeSpec = {
     rareFloor: 0.9,
   },
 
-  ambiance: [...fill(2).of("𐂷"), ...fill(20).of("."), ...fill(2).of("𐃦"), ...fill(1).of("𐃀")],
+  ambiance: [
+    [...fill(50).of("."), ...fill(10).of("𑀇")],
+    [...fill(10).of(chalk.green("𐂩")), ...fill(4).of(chalk.green("𐂷"))],
+    [...fill(4).of(chalk.magenta("𐃦")), ...fill(4).of("ඉ"), ...fill(4).of("ළ"), ...fill(4).of("ඝ")],
+  ],
   rares: {
     a: "ȃ",
     b: "ᗾ",

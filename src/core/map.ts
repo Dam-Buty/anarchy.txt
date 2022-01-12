@@ -55,7 +55,9 @@ export function getOrGenerateChunk(map: Map, { x, y }: { x: number; y: number })
     }
     if (!map.chunks[coord(y)][coord(x)]) {
       // mapLog(map, JSON.stringify({ x, y }));
+      console.time("createChunk");
       map.chunks[coord(y)][coord(x)] = createChunk({ x, y }, map.noise);
+      console.timeEnd("createChunk");
     }
     return map.chunks[coord(y)][coord(x)];
   } catch (e) {
