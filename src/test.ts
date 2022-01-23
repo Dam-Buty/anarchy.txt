@@ -1,5 +1,5 @@
 import wcwidth from "wcwidth";
-import { getRectangle } from "./core/chunk";
+import { getRectangle } from "./server/core/chunk";
 
 const test = [
   [1, 1, 1, 1, 1, 1],
