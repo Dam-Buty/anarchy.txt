@@ -1,11 +1,10 @@
 import murmurhash from "murmurhash";
 import SimplexNoise from "simplex-noise";
 import { Request } from "restify";
-import { Cell, setLetter } from "./cell";
-import { Chunk, createChunk, getCell } from "./chunk";
-import { chunkCoordinates, coord, Coords, createMatrix, mapMatrix } from "../../lib/utils";
-import { chain, chunk, fromPairs, isEqual, uniq } from "lodash";
-import { chunkWidth } from "../../lib/constants";
+import { Chunk, generateChunk } from "./chunk";
+import { chunkCoordinates } from "../../lib/utils";
+import { chain, chunk, isEqual } from "lodash";
+import { Cell } from "../supabase";
 
 export type NoiseCollection = {
   base: SimplexNoise;
@@ -76,12 +75,13 @@ export function createMap(
 //   return getCell(chunk, { x, y });
 // }
 
-export async function getView(
+// Generate any needed chunks to render that view
+async function checkView(
   req: Request,
   { x: startX, y: startY, width, height }: { x: number; y: number; width: number; height: number }
-): Promise<Cell[][]> {
-  // Try to get the 4 corners of the view to detect any ungenerated chunks
-  console.log(`Generating view for player at ${startX}/${startY}`);
+) {
+  console.log(`Checking viewport at ${startX}/${startY}`);
+  // Get the 4 corner cells of the view
   const { data: cornerCells } = await req.supabase.rpc<Cell>("get_corners", {
     startx: startX,
     starty: startY,
@@ -89,7 +89,7 @@ export async function getView(
     height,
   });
 
-  // If corner cells are missing then we have ungenerated chunks
+  // Missing corner cells indicate ungenerated chunks
   if (cornerCells.length < 4) {
     const corners = chain([
       [startX, startY],
@@ -108,7 +108,7 @@ export async function getView(
       .value();
 
     for (const [x, y] of corners) {
-      const chunk = await createChunk({ x, y }, req.map.noise);
+      const chunk = await generateChunk({ x, y }, req.map.noise);
 
       const { error } = await req.from("cell").insert(
         chunk.cells.flat().map((cell) => ({
@@ -127,6 +127,14 @@ export async function getView(
       console.log(error);
     }
   }
+}
+
+export async function getView(
+  req: Request,
+  { x: startX, y: startY, width, height }: { x: number; y: number; width: number; height: number }
+): Promise<Cell[][]> {
+  await checkView(req, { x: startX, y: startY, width, height });
+  console.log(`Getting viewport at ${startX}/${startY}`);
 
   const { data: cells, error } = await req.supabase.rpc<Cell>("get_rectangle", {
     startx: startX,
