@@ -1,4 +1,4 @@
-import { BiomeSpec } from "../core/biome";
+import { BiomeSpec } from "../../core/biome";
 import { fill } from "../../lib/utils";
 
 export const hacker: BiomeSpec = {

@@ -1,15 +1,12 @@
 import restify from "restify";
 
-import { createMap, getView } from "./core/map";
-import { definitions } from "./core/models";
+import { createMap, getView } from "../core/map";
 import { playerXInViewport, playerYInViewport } from "../lib/constants";
-import { makeSupabase, Player, Cell } from "./supabase";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { SupabaseQueryBuilder } from "@supabase/supabase-js/dist/main/lib/SupabaseQueryBuilder";
+import { makeSupabase, Player, Cell, From, Rpc } from "./supabase";
 import { frontPage, oauthPage } from "./middleware/auth";
-import { update } from "lodash";
-import { pathModel } from "./core/cell";
+import { pathModel } from "../core/cell";
 import { Direction, spliceViewport } from "../lib/utils";
+import { SupabaseClient } from "@supabase/supabase-js";
 const server = restify.createServer();
 
 server.use(restify.plugins.bodyParser());
@@ -28,8 +25,9 @@ const viewportHeight = 40;
 declare module "restify" {
   export interface Request {
     player: Player;
-    supabase: ReturnType<typeof makeSupabase>["supabase"];
-    from: ReturnType<typeof makeSupabase>["from"];
+    supabase: SupabaseClient;
+    rpc: Rpc;
+    from: From;
     map: ReturnType<typeof createMap>;
     getView: (options?: { x: number; y: number; width: number; height: number }) => Promise<Cell[][]>;
   }
@@ -38,13 +36,10 @@ declare module "restify" {
 server.use(async (req, res, next) => {
   const { accessToken } = req.body || req.query || {};
 
-  const { supabase, from } = makeSupabase(accessToken);
-
-  req.supabase = supabase;
-  req.from = from;
+  makeSupabase(req, accessToken);
 
   if (accessToken) {
-    const { data, error } = await from("player").select(
+    const { data, error } = await req.from("player").select(
       `
     x,
     y,
@@ -88,16 +83,13 @@ export function authenticated(req, res, next) {
 }
 
 server.get("/view", authenticated, async (req, res) => {
-  console.log(req, req.getView);
   const viewport = await req.getView();
-
   res.contentType = "text/plain";
   res.send(viewport.map((line) => line.map((cell) => cell.letter).join("")).join("\n"));
 });
 
 server.post("/view", authenticated, async (req, res) => {
   const viewport = await req.getView();
-  console.log(req.player);
 
   res.json({ player: req.player, viewport });
 });
@@ -109,66 +101,71 @@ function isWalkable(cell: Cell) {
 server.post("/move", async (req, res) => {
   const direction: Direction = req.body.direction;
 
-  const { data: target } = await req.supabase.rpc<Cell>("get_target", { target: direction }).single();
+  // Get the target cell and check that it is walkable
+  const { data: target } = await req.rpc("get_target", { target: direction }).single();
 
-  if (isWalkable(target)) {
-    let newX = req.player.x;
-    let newY = req.player.y;
+  if (!isWalkable(target)) {
+    return res.json({ ok: false });
+  }
+
+  let newX = req.player.x;
+  let newY = req.player.y;
+  switch (direction) {
+    case "up":
+      newY++;
+      break;
+    case "right":
+      newX++;
+      break;
+    case "down":
+      newY--;
+    case "left":
+      newX--;
+  }
+
+  const {
+    data: [updatedPlayer],
+  } = await req.from("player").update({ x: newX, y: newY });
+  req.player = updatedPlayer;
+
+  const newViewport = (() => {
     switch (direction) {
       case "up":
-        newY++;
-        break;
+        return {
+          x: updatedPlayer.x - playerXInViewport,
+          y: updatedPlayer.y - playerYInViewport - 1,
+          width: viewportWidth,
+          height: 1,
+        };
       case "right":
-        newX++;
-        break;
+        return {
+          x: updatedPlayer.x - playerXInViewport + viewportWidth,
+          y: updatedPlayer.y - playerYInViewport,
+          width: 1,
+          height: viewportHeight,
+        };
       case "down":
-        newY--;
+        return {
+          x: updatedPlayer.x - playerXInViewport,
+          y: updatedPlayer.y - playerYInViewport + viewportHeight,
+          width: viewportWidth,
+          height: 1,
+        };
       case "left":
-        newX--;
+        return {
+          x: updatedPlayer.x - playerXInViewport - 1,
+          y: updatedPlayer.y - playerYInViewport,
+          width: 1,
+          height: viewportHeight,
+        };
     }
+  })();
 
-    const {
-      data: [updatedPlayer],
-    } = await req.from("player").update({ x: newX, y: newY });
-    req.player = updatedPlayer;
+  const newCells = await req.getView(newViewport);
 
-    const newViewport = (() => {
-      switch (direction) {
-        case "up":
-          return {
-            x: updatedPlayer.x - playerXInViewport,
-            y: updatedPlayer.y - playerYInViewport - 1,
-            width: viewportWidth,
-            height: 1,
-          };
-        case "right":
-          return {
-            x: updatedPlayer.x - playerXInViewport + viewportWidth,
-            y: updatedPlayer.y - playerYInViewport,
-            width: 1,
-            height: viewportHeight,
-          };
-        case "down":
-          return {
-            x: updatedPlayer.x - playerXInViewport,
-            y: updatedPlayer.y - playerYInViewport + viewportHeight,
-            width: viewportWidth,
-            height: 1,
-          };
-        case "left":
-          return {
-            x: updatedPlayer.x - playerXInViewport - 1,
-            y: updatedPlayer.y - playerYInViewport,
-            width: 1,
-            height: viewportHeight,
-          };
-      }
-    })();
+  console.log(newCells);
 
-    const newCells = await req.getView(newViewport);
-
-    return spliceViewport(direction, viewport, newCells);
-  }
+  res.json({ newCells });
 });
 
 server.listen(8666);

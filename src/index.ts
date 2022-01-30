@@ -1,9 +1,9 @@
 import fs from "fs";
 import readline from "readline";
 import chalk from "chalk";
-import { Cell, damage, place } from "./server/core/cell";
-import { createMap, getCellFromChunk, getView } from "./server/core/map";
-import { addToInventory, createPlayer, playerModel } from "./server/core/player";
+import { Cell, damage, place } from "./core/cell";
+import { createMap, getCellFromChunk, getView } from "./core/map";
+import { addToInventory, createPlayer, playerModel } from "./core/player";
 import { isNull, mapValues, sortBy } from "lodash";
 import { createMatrix, mapMatrix } from "./lib/utils";
 import { chunkHeight, chunkWidth } from "./lib/constants";

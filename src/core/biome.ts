@@ -1,10 +1,10 @@
 import { uniq } from "lodash";
 import shuffle from "knuth-shuffle-seeded";
-import { hacker } from "../biomes/hacker";
-import { hollowmen } from "../biomes/hollowmen";
-import { NormalizeOptions } from "../../lib/utils";
-import { Cell } from "./cell";
+import { hacker } from "../server/biomes/hacker";
+import { hollowmen } from "../server/biomes/hollowmen";
+import { NormalizeOptions } from "../lib/utils";
 import { NoiseCollection } from "./map";
+import { Cell } from "../server/supabase";
 
 type GenerationParameters = {
   scaleFactor: { x: number; y: number };

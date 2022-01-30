@@ -1,10 +1,11 @@
 import { chain, chunk, flatMap, sumBy } from "lodash";
-import { chunkHeight, chunkWidth, structureMargin, structureScoreThreshold } from "../../lib/constants";
-import { chooseWithNoise, Coords, createMatrix, fill, getRectangle, isInRectangle, Rectangle } from "../../lib/utils";
-import { biomeCache } from "./biome";
-import { Cell, pathModel, setLetter } from "./cell";
+import { chunkHeight, chunkWidth, structureMargin, structureScoreThreshold } from "../lib/constants";
+import { chooseWithNoise, Coords, createMatrix, fill, getRectangle, isInRectangle, Rectangle } from "../lib/utils";
+import { Cell } from "../server/supabase";
+import { Biome, biomeCache } from "./biome";
+import { isAmbiance, isPath, pathModel } from "./cell";
 
-export function addStructures(cells: Cell[][], structureCandidates: Coords[]) {
+export function addStructures(cells: Partial<Cell>[][], structureCandidates: Coords[]) {
   // Generate structures
   const structuresCache: Coords[] = [];
   structureCandidates
@@ -62,7 +63,7 @@ export function addStructures(cells: Cell[][], structureCandidates: Coords[]) {
       if (possibleStructure.score > workingThreshold) {
         // Chose structure
         const cell = cells[y][x];
-        const biome = biomeCache[cell.biomeName];
+        const biome: Biome = biomeCache[cell.biomeName];
 
         const structure = chooseWithNoise(biome.txt.structures, cell.letterValue);
 
@@ -75,18 +76,18 @@ export function addStructures(cells: Cell[][], structureCandidates: Coords[]) {
     });
 }
 
-export function getPossibleLettersForStructureCorner(cell: Cell, cornerLetter: string): string[] {
-  if (cell.isPath) {
+export function getPossibleLettersForStructureCorner(cell: Partial<Cell>, cornerLetter: string): string[] {
+  if (isPath(cell)) {
     return [...fill(5).of(pathModel), ...fill(2).of("."), ...fill(3).of(cornerLetter)];
   }
-  if (cell.isAmbiance) {
+  if (isAmbiance(cell)) {
     return [...fill(3).of(cell.letter), ...fill(7).of(cornerLetter)];
   }
   return [cornerLetter];
 }
 
 export function getPossibleLettersForStructureFrame(
-  cell: Cell,
+  cell: Partial<Cell>,
   text: string,
   [x, y]: Coords,
   rectangle: Rectangle
@@ -158,7 +159,7 @@ export function fitText(text: string, rectangle: Rectangle): string[][] {
   return chunk(paddedString.split(""), usableWidth).slice(0, usableHeight);
 }
 
-export function drawStructure(cells: Cell[][], text: string, rectangle: Rectangle): Cell[][] {
+export function drawStructure(cells: Partial<Cell>[][], text: string, rectangle: Rectangle): Partial<Cell>[][] {
   // Prepare the string for display in the rectangle
   const textLines = fitText(text, rectangle);
 
@@ -182,29 +183,25 @@ export function drawStructure(cells: Cell[][], text: string, rectangle: Rectangl
       const letter = textLines[letterY][letterX];
       const variant = biome.alphabet.rares[letter] || letter;
       // Handle decay depending on the original type of the cell
-      if (cell.isPath) {
+      if (isPath(cell)) {
         return [...fill(4).of(pathModel), ...fill(2).of("."), ...fill(3).of(variant), ...fill(1).of(letter)];
       }
-      if (cell.isAmbiance) {
+      if (isAmbiance(cell)) {
         return [...fill(4).of(cell.letter), ...fill(2).of(variant), ...fill(5).of(letter)];
       }
       return [...fill(27).of(letter), ...fill(1).of("."), ...fill(5).of(variant)];
     })();
 
     // Choose the letter with the right normalizer
-    setLetter(
-      cell,
-      (() => {
-        if (cell.isPath) {
-          return chooseWithNoise(possibleLetters, cell.value, biome.normalizers.path);
-        }
-        if (cell.isAmbiance) {
-          return chooseWithNoise(possibleLetters, cell.value, biome.normalizers.ambiance);
-        }
-        return chooseWithNoise(possibleLetters, cell.value, biome.normalizers.letter);
-      })(),
-      true
-    );
+    cell.letter = (() => {
+      if (isPath(cell)) {
+        return chooseWithNoise(possibleLetters, cell.value, biome.normalizers.path);
+      }
+      if (isAmbiance(cell)) {
+        return chooseWithNoise(possibleLetters, cell.value, biome.normalizers.ambiance);
+      }
+      return chooseWithNoise(possibleLetters, cell.value, biome.normalizers.letter);
+    })();
 
     return cell;
   });

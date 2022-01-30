@@ -28,6 +28,8 @@ export interface paths {
           createdAt?: parameters["rowFilter.cell.createdAt"];
           updatedAt?: parameters["rowFilter.cell.updatedAt"];
           id?: parameters["rowFilter.cell.id"];
+          placedById?: parameters["rowFilter.cell.placedById"];
+          placedAt?: parameters["rowFilter.cell.placedAt"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -90,6 +92,8 @@ export interface paths {
           createdAt?: parameters["rowFilter.cell.createdAt"];
           updatedAt?: parameters["rowFilter.cell.updatedAt"];
           id?: parameters["rowFilter.cell.id"];
+          placedById?: parameters["rowFilter.cell.placedById"];
+          placedAt?: parameters["rowFilter.cell.placedAt"];
         };
         header: {
           /** Preference */
@@ -116,6 +120,8 @@ export interface paths {
           createdAt?: parameters["rowFilter.cell.createdAt"];
           updatedAt?: parameters["rowFilter.cell.updatedAt"];
           id?: parameters["rowFilter.cell.id"];
+          placedById?: parameters["rowFilter.cell.placedById"];
+          placedAt?: parameters["rowFilter.cell.placedAt"];
         };
         body: {
           /** cell */
@@ -141,6 +147,7 @@ export interface paths {
           name?: parameters["rowFilter.player.name"];
           x?: parameters["rowFilter.player.x"];
           y?: parameters["rowFilter.player.y"];
+          uuid?: parameters["rowFilter.player.uuid"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -196,6 +203,7 @@ export interface paths {
           name?: parameters["rowFilter.player.name"];
           x?: parameters["rowFilter.player.x"];
           y?: parameters["rowFilter.player.y"];
+          uuid?: parameters["rowFilter.player.uuid"];
         };
         header: {
           /** Preference */
@@ -215,6 +223,7 @@ export interface paths {
           name?: parameters["rowFilter.player.name"];
           x?: parameters["rowFilter.player.x"];
           y?: parameters["rowFilter.player.y"];
+          uuid?: parameters["rowFilter.player.uuid"];
         };
         body: {
           /** player */
@@ -330,6 +339,78 @@ export interface paths {
       };
     };
   };
+  "/rpc/get_target": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: public.direction */
+            target: string;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/get_rectangle": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: integer */
+            width: number;
+            /** Format: integer */
+            startx: number;
+            /** Format: integer */
+            height: number;
+            /** Format: integer */
+            starty: number;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/get_corners": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: integer */
+            width: number;
+            /** Format: integer */
+            startx: number;
+            /** Format: integer */
+            height: number;
+            /** Format: integer */
+            starty: number;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
 }
 
 export interface definitions {
@@ -340,9 +421,9 @@ export interface definitions {
     y: number;
     /** Format: smallint */
     health?: number;
-    /** Format: smallint */
+    /** Format: double precision */
     value?: number;
-    /** Format: smallint */
+    /** Format: double precision */
     letterValue?: number;
     /** Format: character varying */
     letter?: string;
@@ -371,6 +452,14 @@ export interface definitions {
      * This is a Primary Key.<pk/>
      */
     id: number;
+    /**
+     * Format: bigint
+     * @description Note:
+     * This is a Foreign Key to `player.id`.<fk table='player' column='id'/>
+     */
+    placedById?: number;
+    /** Format: timestamp without time zone */
+    placedAt?: string;
   };
   player: {
     /**
@@ -390,6 +479,8 @@ export interface definitions {
     x?: number;
     /** Format: integer */
     y?: number;
+    /** Format: uuid */
+    uuid: string;
   };
   stack: {
     /**
@@ -458,9 +549,9 @@ export interface parameters {
   "rowFilter.cell.y": string;
   /** Format: smallint */
   "rowFilter.cell.health": string;
-  /** Format: smallint */
+  /** Format: double precision */
   "rowFilter.cell.value": string;
-  /** Format: smallint */
+  /** Format: double precision */
   "rowFilter.cell.letterValue": string;
   /** Format: character varying */
   "rowFilter.cell.letter": string;
@@ -476,6 +567,10 @@ export interface parameters {
   "rowFilter.cell.updatedAt": string;
   /** Format: bigint */
   "rowFilter.cell.id": string;
+  /** Format: bigint */
+  "rowFilter.cell.placedById": string;
+  /** Format: timestamp without time zone */
+  "rowFilter.cell.placedAt": string;
   /** @description player */
   "body.player": definitions["player"];
   /** Format: bigint */
@@ -488,6 +583,8 @@ export interface parameters {
   "rowFilter.player.x": string;
   /** Format: integer */
   "rowFilter.player.y": string;
+  /** Format: uuid */
+  "rowFilter.player.uuid": string;
   /** @description stack */
   "body.stack": definitions["stack"];
   /** Format: bigint */

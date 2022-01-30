@@ -2,9 +2,9 @@ import murmurhash from "murmurhash";
 import SimplexNoise from "simplex-noise";
 import { Request } from "restify";
 import { Chunk, generateChunk } from "./chunk";
-import { chunkCoordinates } from "../../lib/utils";
+import { chunkCoordinates } from "../lib/utils";
 import { chain, chunk, isEqual } from "lodash";
-import { Cell } from "../supabase";
+import { Cell } from "../server/supabase";
 
 export type NoiseCollection = {
   base: SimplexNoise;
@@ -82,12 +82,14 @@ async function checkView(
 ) {
   console.log(`Checking viewport at ${startX}/${startY}`);
   // Get the 4 corner cells of the view
-  const { data: cornerCells } = await req.supabase.rpc<Cell>("get_corners", {
+  const { data: cornerCells, error } = await req.rpc("get_corners", {
     startx: startX,
     starty: startY,
     width,
     height,
   });
+
+  console.log(error);
 
   // Missing corner cells indicate ungenerated chunks
   if (cornerCells.length < 4) {
