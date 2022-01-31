@@ -16,7 +16,7 @@ export type Chunk = {
 };
 
 export async function generateChunk({ x, y }: Pick<Chunk, "x" | "y">, noise: NoiseCollection): Promise<Chunk> {
-  console.log(`Generating chunk ${x}/${y}`);
+  console.log(`Generating chunk`, { x, y });
   const startX = x * chunkWidth;
   const startY = y * chunkHeight;
 

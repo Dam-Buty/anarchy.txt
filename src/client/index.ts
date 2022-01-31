@@ -2,14 +2,12 @@ import chalk from "chalk";
 import readline from "readline";
 import fetch from "node-fetch";
 
-import { playerXInViewport, playerYInViewport } from "../lib/constants";
 import { spliceViewport } from "../lib/utils";
 
-import { definitions } from "../core/models";
 import { playerModel } from "../core/player";
 import { Cell, Player } from "../server/supabase";
 import { access_token } from "./jwt.json";
-import { fstat, writeFileSync } from "fs";
+import { writeFileSync } from "fs";
 
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
@@ -47,9 +45,10 @@ function formatLine(player: Player, cells: Cell[]): string {
       if (!cell) {
         return chalk.red("X");
       }
-      if (cell.x === playerXInViewport && cell.y === playerYInViewport) {
+      if (cell.x === player.x && cell.y === player.y) {
+        console.log(666, Math.abs(Math.round(((player.x % playerModel.length) + (player.y % playerModel.length)) / 2)));
         return playerModel[
-          Math.abs((player.x % playerModel.length) / 2) + Math.abs((player.y % playerModel.length) / 2)
+          Math.abs(Math.round(((player.x % playerModel.length) + (player.y % playerModel.length)) / 2))
         ];
       }
       return formatCell(cell);
@@ -57,8 +56,13 @@ function formatLine(player: Player, cells: Cell[]): string {
     .join(" ");
 }
 
+let dirty = false;
+
 function render() {
-  console.log(viewport.length, viewport[0].length);
+  if (!dirty) {
+    console.clear();
+  }
+  console.log(player.x, player.y, dirty ? "D" : "");
   console.log(viewport.map((line) => formatLine(player, line)).join("\n"));
 }
 
@@ -92,24 +96,37 @@ async function move(direction: Direction) {
     console.error(res.status, res.statusText);
   }
 
-  const data = await res.json();
-  console.log(formatLine(player, data.newCells));
+  const { player: updatedPlayer, newCells, ok } = await res.json();
 
-  viewport = spliceViewport(direction, viewport, data.newCells);
+  if (ok === false) {
+    return;
+  }
+
+  // Unzip the cells according to the direction
+  const newLine = (() => {
+    if (["left", "right"].includes(direction)) {
+      return newCells.map((line) => line[0]);
+    }
+    return newCells[0];
+  })();
+
+  console.log(newLine);
+  player = updatedPlayer;
+  viewport = spliceViewport(direction, viewport, newLine);
 }
 
 process.stdin.on("keypress", async (str, key) => {
   if (!bootstrapped) {
     return null;
   }
-  console.log(key);
+  // console.log(key);
   // Toggle inventory mode
   // if (key.sequence === "<" && player.inventory.length > 0) {
   //   player.inInventory = !player.inInventory;
   // }
   // Handle directional keys
   if (directions.includes(key.name)) {
-    move(key.name);
+    await move(key.name);
     render();
     // Ctrl + Directional : interact
     // if (key.ctrl) {
@@ -142,12 +159,12 @@ process.stdin.on("keypress", async (str, key) => {
       // case "s":
       //   saveWorld();
       //   break;
-      // case "n":
-      //   cleanUp = !cleanUp;
-      //   break;
+      case "n":
+        dirty = !dirty;
+        break;
     }
   }
-  // render();
+  render();
 });
 
 (async () => {

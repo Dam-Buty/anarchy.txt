@@ -112,15 +112,17 @@ server.post("/move", async (req, res) => {
   let newY = req.player.y;
   switch (direction) {
     case "up":
-      newY++;
+      newY--;
       break;
     case "right":
       newX++;
       break;
     case "down":
-      newY--;
+      newY++;
+      break;
     case "left":
       newX--;
+      break;
   }
 
   const {
@@ -139,7 +141,7 @@ server.post("/move", async (req, res) => {
         };
       case "right":
         return {
-          x: updatedPlayer.x - playerXInViewport + viewportWidth,
+          x: updatedPlayer.x - playerXInViewport + viewportWidth + 1,
           y: updatedPlayer.y - playerYInViewport,
           width: 1,
           height: viewportHeight,
@@ -147,7 +149,7 @@ server.post("/move", async (req, res) => {
       case "down":
         return {
           x: updatedPlayer.x - playerXInViewport,
-          y: updatedPlayer.y - playerYInViewport + viewportHeight,
+          y: updatedPlayer.y - playerYInViewport + viewportHeight + 1,
           width: viewportWidth,
           height: 1,
         };
@@ -163,9 +165,7 @@ server.post("/move", async (req, res) => {
 
   const newCells = await req.getView(newViewport);
 
-  console.log(newCells);
-
-  res.json({ newCells });
+  res.json({ player: req.player, newCells });
 });
 
 server.listen(8666);

@@ -70,6 +70,7 @@ export function getRectangle<T>(array: T[][], rectangle: Rectangle): T[][] {
 }
 
 export function spliceViewport(direction: Direction, viewport: Cell[][], newSet: Cell[]): Cell[][] {
+  console.log("Splicing viewport", { direction, newSet: newSet.map((i) => i.letter) });
   switch (direction) {
     case "up":
       return [newSet, ...viewport.slice(0, -1)];

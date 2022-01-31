@@ -80,7 +80,7 @@ async function checkView(
   req: Request,
   { x: startX, y: startY, width, height }: { x: number; y: number; width: number; height: number }
 ) {
-  console.log(`Checking viewport at ${startX}/${startY}`);
+  console.log(`Checking viewport`, { x: startX, y: startY, width, height });
   // Get the 4 corner cells of the view
   const { data: cornerCells, error } = await req.rpc("get_corners", {
     startx: startX,
@@ -89,10 +89,10 @@ async function checkView(
     height,
   });
 
-  console.log(error);
+  const expectedCorners = width === 1 || height === 1 ? 2 : 4;
 
   // Missing corner cells indicate ungenerated chunks
-  if (cornerCells.length < 4) {
+  if (cornerCells.length < expectedCorners) {
     const corners = chain([
       [startX, startY],
       [startX + width - 1, startY],
@@ -108,6 +108,8 @@ async function checkView(
       .map(([x, y]) => chunkCoordinates(x, y))
       .uniqWith(isEqual)
       .value();
+
+    console.log(`Generating chunks`, corners);
 
     for (const [x, y] of corners) {
       const chunk = await generateChunk({ x, y }, req.map.noise);
@@ -135,8 +137,8 @@ export async function getView(
   req: Request,
   { x: startX, y: startY, width, height }: { x: number; y: number; width: number; height: number }
 ): Promise<Cell[][]> {
+  console.log(`Getting viewport`, { x: startX, y: startY, width, height });
   await checkView(req, { x: startX, y: startY, width, height });
-  console.log(`Getting viewport at ${startX}/${startY}`);
 
   const { data: cells, error } = await req.supabase.rpc<Cell>("get_rectangle", {
     startx: startX,
