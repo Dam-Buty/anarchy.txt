@@ -8,3 +8,14 @@
 - Animals : attracted to a rare block, you can corral them
 - Rituals : to obtain the various auras
 - Youtube trailer
+
+
+
+fetch: 686.991ms
+
+rpc: 123.908ms
+updateplayer: 121.533ms
+Getting viewport { x: -82, y: -12, width: 60, height: 1 }
+Checking viewport { x: -82, y: -12, width: 60, height: 1 }
+getview: 246.163ms
+json: 1.679ms

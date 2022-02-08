@@ -1,7 +1,7 @@
-import { Cell } from "../server/supabase";
 import { chunkHeight, chunkWidth } from "./constants";
+import { Cell } from "./supabase";
 
-const directions = ["up", "down", "left", "right"] as const;
+export const directions = ["up", "down", "left", "right"] as const;
 export type Direction = typeof directions[number];
 
 export async function sleep(ms: number) {
@@ -69,13 +69,25 @@ export function getRectangle<T>(array: T[][], rectangle: Rectangle): T[][] {
   return array.slice(y, y + rectangle.height).map((line) => line.slice(x, x + rectangle.width));
 }
 
-export function spliceViewport(direction: Direction, viewport: Cell[][], newSet: Cell[]): Cell[][] {
-  console.log("Splicing viewport", { direction, newSet: newSet.map((i) => i.letter) });
+export function moveViewport(direction: Direction, viewport: Cell[][], newSet: Cell[]): Cell[][] {
   switch (direction) {
     case "up":
       return [newSet, ...viewport.slice(0, -1)];
     case "right":
       return viewport.map((line, y) => [...line.slice(1), newSet[y]]);
+    case "down":
+      return [...viewport.slice(1), newSet];
+    case "left":
+      return viewport.map((line, y) => [newSet[y], ...line.slice(0, -1)]);
+  }
+}
+
+export function spliceLine(direction: Direction, viewport: Cell[][], newSet: Cell[]): Cell[][] {
+  switch (direction) {
+    case "up":
+      return [newSet, ...viewport.slice(1)];
+    case "right":
+      return viewport.map((line, y) => [...line.slice(0, -1), newSet[y]]);
     case "down":
       return [...viewport.slice(1), newSet];
     case "left":

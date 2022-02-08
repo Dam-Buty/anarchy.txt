@@ -4,7 +4,7 @@ import { hacker } from "../server/biomes/hacker";
 import { hollowmen } from "../server/biomes/hollowmen";
 import { NormalizeOptions } from "../lib/utils";
 import { NoiseCollection } from "./map";
-import { Cell } from "../server/supabase";
+import { Cell } from "../lib/supabase";
 
 type GenerationParameters = {
   scaleFactor: { x: number; y: number };

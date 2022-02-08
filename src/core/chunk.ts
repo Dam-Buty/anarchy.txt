@@ -1,6 +1,6 @@
 import { chunkHeight, chunkWidth, structureValueThreshold } from "../lib/constants";
+import { Cell } from "../lib/supabase";
 import { Coords, createMatrix } from "../lib/utils";
-import { Cell } from "../server/supabase";
 import { createCell } from "./cell";
 import { addStructures } from "./generations";
 import { NoiseCollection } from "./map";

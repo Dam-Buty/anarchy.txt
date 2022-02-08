@@ -1,5 +1,5 @@
 import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { SupabaseQueryBuilder } from "@supabase/supabase-js/dist/main/lib/SupabaseQueryBuilder";
 import { Request } from "restify";
 
@@ -12,6 +12,8 @@ export type Cell = definitions["cell"];
 export type GetCorners = paths["/rpc/get_corners"];
 export type GetRectangle = paths["/rpc/get_rectangle"];
 export type GetTarget = paths["/rpc/get_target"];
+export type GetView = paths["/rpc/get_view"];
+export type Move = paths["/rpc/move"];
 
 interface patchedDefinitions {
   stack: Stack;
@@ -23,6 +25,8 @@ interface patchedPaths {
   get_corners: GetCorners;
   get_rectangle: GetRectangle;
   get_target: GetTarget;
+  get_view: GetView;
+  move: Move;
 }
 
 export type From = <T extends keyof patchedDefinitions>(table: T) => SupabaseQueryBuilder<patchedDefinitions[T]>;
@@ -31,18 +35,20 @@ export type Rpc = <T extends keyof patchedPaths>(
   args: patchedPaths[typeof func]["post"]["parameters"]["body"]["args"]
 ) => PostgrestFilterBuilder<Cell>;
 
-export function makeSupabase(req: Request, accessKey?: string) {
-  req.supabase = createClient(process.env["SUPABASE_URL"], process.env["SUPABASE_KEY"]);
+export function makeSupabase(accessKey?: string) {
+  const supabase = createClient(process.env["SUPABASE_URL"], process.env["SUPABASE_KEY"]);
 
   if (accessKey) {
-    req.supabase.auth.setAuth(accessKey);
+    supabase.auth.setAuth(accessKey);
   }
 
-  req.from = function from(table) {
-    return req.supabase.from<patchedDefinitions[typeof table]>(table);
+  const from: From = function from(table) {
+    return supabase.from<patchedDefinitions[typeof table]>(table);
   };
 
-  req.rpc = function rpc(func, args: patchedPaths[typeof func]["post"]["parameters"]["body"]["args"]) {
-    return req.supabase.rpc<Cell>(func, args);
+  const rpc: Rpc = function rpc(func, args: patchedPaths[typeof func]["post"]["parameters"]["body"]["args"]) {
+    return supabase.rpc<Cell>(func, args);
   };
+
+  return { supabase, from, rpc };
 }

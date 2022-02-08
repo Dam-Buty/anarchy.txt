@@ -1,7 +1,7 @@
 import { Biome, biomeCache, getBiome } from "./biome";
 import { chooseWithNoise } from "../lib/utils";
 import { NoiseCollection } from "./map";
-import { Cell } from "../server/supabase";
+import { Cell } from "../lib/supabase";
 
 export const pathModel = " ";
 

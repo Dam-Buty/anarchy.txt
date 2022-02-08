@@ -339,6 +339,28 @@ export interface paths {
       };
     };
   };
+  "/rpc/get_view": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: integer */
+            width: number;
+            /** Format: integer */
+            height: number;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
   "/rpc/get_target": {
     post: {
       parameters: {
@@ -398,6 +420,26 @@ export interface paths {
             height: number;
             /** Format: integer */
             starty: number;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/move": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: public.direction */
+            target: string;
           };
         };
         header: {
