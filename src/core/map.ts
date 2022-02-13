@@ -2,7 +2,7 @@ import murmurhash from "murmurhash";
 import SimplexNoise from "simplex-noise";
 import { Request } from "restify";
 import { generateChunk } from "./chunk";
-import { chunkCoordinates, createMatrix } from "../lib/utils";
+import { chunkCoordinates, createMatrix, Rectangle } from "../lib/utils";
 import { chain, chunk, isEqual, map } from "lodash";
 import { Cell } from "../lib/supabase";
 
@@ -159,14 +159,14 @@ async function generateView(
   }
 }
 
-function getCell(req: Request, { x, y }: { x: number; y: number }) {
+export function getCell(req: Request, { x, y }: { x: number; y: number }) {
   if (!req.map.cells[y]) {
     req.map.cells[y] = {};
   }
   return req.map.cells[y][x] || null;
 }
 
-function setCell(req: Request, cell: Partial<Cell>) {
+export function setCell(req: Request, cell: Partial<Cell>) {
   if (!req.map.cells[cell.y]) {
     req.map.cells[cell.y] = {};
   }
@@ -197,7 +197,7 @@ function getRectangleFromCache(
 
 export async function getView(
   req: Request,
-  { x: startX, y: startY, width, height }: { x: number; y: number; width: number; height: number }
+  { corner: [startX, startY], width, height }: Rectangle
 ): Promise<Partial<Cell>[][]> {
   console.log(`Getting from cache`, { x: startX, y: startY, width, height });
 
