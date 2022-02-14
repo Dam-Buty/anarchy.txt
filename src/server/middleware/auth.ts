@@ -1,4 +1,4 @@
-import { Request, Response } from "restify";
+import { Next, Request, Response } from "restify";
 import { viewportHeight, viewportWidth } from "../../client/constants";
 import { playerOffset, renderOffset } from "../../lib/constants";
 import { makeSupabase, Player } from "../../lib/supabase";
@@ -48,11 +48,11 @@ const livePlayers: Record<
   }
 > = {};
 
-export async function authenticate(req: Request, res: Response) {
+export async function authenticate(req: Request, res: Response, next: Next) {
   const { accessToken } = req.body || req.query || {};
 
   if (!accessToken) {
-    return;
+    return next();
   }
 
   const playerId = authCache[accessToken];
@@ -61,7 +61,7 @@ export async function authenticate(req: Request, res: Response) {
   if (playerId) {
     req.player = livePlayers[authCache[accessToken]].player;
     livePlayers[authCache[accessToken]].lastUpdated = new Date();
-    return;
+    return next();
   }
 
   // Try to authenticate against the database
@@ -94,6 +94,8 @@ export async function authenticate(req: Request, res: Response) {
   authCache[accessToken] = player.id;
   livePlayers[player.id] = { player, lastUpdated: new Date() };
   req.player = player;
+
+  next();
 }
 
 export function movePlayer(req: Request, direction: Direction) {

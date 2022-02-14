@@ -1,6 +1,6 @@
 import restify from "restify";
 
-import { createMap, getCell, getView, Map } from "../core/map";
+import { cacheRenderBox, createMap, getCell, getView, Map } from "../core/map";
 import { authenticate, frontPage, movePlayer, oauthPage } from "./middleware/auth";
 import { pathModel } from "../core/cell";
 import { Direction, Rectangle } from "../lib/utils";
@@ -32,6 +32,7 @@ declare module "restify" {
     renderBox: Rectangle;
     viewBox: Rectangle;
     neighbors: Record<Direction, Partial<Cell>>;
+    cacheRenderBox: (options?: Rectangle) => Promise<void>;
     getView: (options?: Rectangle) => Promise<Partial<Cell>[][]>;
     stackPromise: (promise: Promise<any>) => void;
   }
@@ -47,7 +48,7 @@ server.use(async (req, res, next) => {
   req.rpc = rpc;
 
   if (!req.player) {
-    next();
+    return next();
   }
 
   req.stackPromise = (promise: Promise<any>) => {
@@ -70,6 +71,7 @@ server.use(async (req, res, next) => {
   };
 
   req.map = map;
+  req.cacheRenderBox = (options = req.renderBox) => cacheRenderBox(req, options);
   req.getView = (options = req.viewBox) => getView(req, options);
   next();
 });
@@ -86,9 +88,10 @@ export function authenticated(req, res, next) {
 
 server.post("/login", authenticated, async (req, res) => {
   // Cache the renderbox of the player
-  await req.getView(req.renderBox);
+  await req.cacheRenderBox();
   // return their viewbox
-  res.json({ player: req.player, viewport: await req.getView() });
+  const viewport = await req.getView();
+  res.json({ player: req.player, viewport });
 });
 
 server.get("/view", authenticated, async (req, res) => {
@@ -107,13 +110,14 @@ function isWalkable(cell: Partial<Cell>) {
   return [pathModel, " "].includes(cell.letter);
 }
 
-function setNeighbors(req: restify.Request) {
+function setNeighbors(req: restify.Request, res: restify.Response, next: restify.Next) {
   req.neighbors = {
     up: getCell(req, { x: req.player.x, y: req.player.y - 1 }),
     right: getCell(req, { x: req.player.x + 1, y: req.player.y }),
     down: getCell(req, { x: req.player.x, y: req.player.y + 1 }),
     left: getCell(req, { x: req.player.x - 1, y: req.player.y }),
   };
+  next();
 }
 
 server.post("/move", setNeighbors, async (req, res) => {
@@ -156,9 +160,9 @@ server.post("/move", setNeighbors, async (req, res) => {
   const newCells = await req.getView(newViewport);
 
   // Cache the new renderbox
-  req.getView(req.renderBox);
+  req.cacheRenderBox(req.renderBox);
 
-  res.json({ player: req.player, newCells });
+  res.json({ ok: true, player: req.player, newCells });
 });
 
 server.listen(8666);

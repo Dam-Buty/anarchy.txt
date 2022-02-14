@@ -8,8 +8,8 @@ import { Cell, Player } from "../lib/supabase";
 import { fetchPlayer, fetchView, rpc } from "./supabase";
 import { playerOffset } from "../lib/constants";
 import { chunk } from "lodash";
-import { access_token } from "./jwt.json";
 import { host, viewportHeight, viewportWidth } from "./constants";
+import { apiFetch } from "./api";
 
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
@@ -27,149 +27,6 @@ export type Viewport = {
 
 export type PlayerWithViewport = Player & { viewport: Viewport };
 
-async function refresh() {
-  loading = true;
-  const playerfromDb = await fetchPlayer();
-  const cells = await fetchView();
-  const player: PlayerWithViewport = {
-    ...playerfromDb,
-    viewport: getViewport(playerfromDb, chunk(cells, viewportWidth)),
-  };
-
-  render(player, dirty);
-  loading = false;
-
-  return player;
-}
-
-async function move(player: PlayerWithViewport, direction: Direction): Promise<PlayerWithViewport> {
-  console.time("fetch");
-  const { data: newCellsFromDb, error } = await rpc("move", { target: direction });
-  console.timeEnd("fetch");
-
-  const needsGenerate =
-    (["left", "right"].includes(direction) && newCellsFromDb.length < viewportWidth) ||
-    (["up", "down"].includes(direction) && newCellsFromDb.length < viewportHeight);
-
-  // If some cells are missing then we need to request a chunk generation
-  if (needsGenerate) {
-    const { topLeft, topRight, bottomLeft, bottomRight } = player.viewport;
-    const payload = (() => {
-      switch (direction) {
-        case "up":
-          return {
-            corners: [
-              [topLeft.x, topLeft.y - 1],
-              [topRight.x, topRight.y - 1],
-            ],
-            newCells: {
-              x: topLeft.x,
-              y: topLeft.y,
-              width: viewportWidth,
-              height: 1,
-            },
-          };
-        case "right":
-          return {
-            corners: [
-              [topRight.x + 1, topRight.y],
-              [bottomRight.x + 1, bottomRight.y],
-            ],
-            newCells: {
-              x: topRight.x + 1,
-              y: topRight.y,
-              width: 1,
-              height: viewportHeight,
-            },
-          };
-        case "down":
-          return {
-            corners: [
-              [bottomLeft.x, bottomLeft.y + 1],
-              [bottomRight.x, bottomRight.y + 1],
-            ],
-            newCells: {
-              x: bottomLeft.x,
-              y: bottomLeft.y,
-              width: viewportWidth,
-              height: 1,
-            },
-          };
-        case "left":
-          return {
-            corners: [
-              [topLeft.x - 1, topLeft.y],
-              [bottomLeft.x - 1, bottomLeft.y],
-            ],
-            newCells: {
-              x: topLeft.x - 1,
-              y: topLeft.y,
-              width: 1,
-              height: viewportHeight,
-            },
-          };
-      }
-    })();
-
-    const res = await fetch(`${host}/generate`, {
-      method: "post",
-      body: JSON.stringify({ accessToken: access_token, ...payload }),
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (!res.ok) {
-      console.error(res.status, res.statusText);
-    }
-
-    const { newCells } = await res.json();
-  }
-
-  let newX = player.x;
-  let newY = player.y;
-  switch (direction) {
-    case "up":
-      newY--;
-      break;
-    case "right":
-      newX++;
-      break;
-    case "down":
-      newY++;
-      break;
-    case "left":
-      newX--;
-      break;
-  }
-
-  player.x = newX;
-  player.y = newY;
-
-  const viewport = getViewport(player, moveViewport(direction, player.viewport.cells, newCellsFromDb));
-
-  return {
-    ...player,
-    viewport,
-  };
-
-  // const res = await fetch(`${host}/move`, {
-  //   method: "post",
-  //   body: JSON.stringify({ accessToken: access_token, direction }),
-  //   headers: { "Content-Type": "application/json" },
-  // });
-  // if (!res.ok) {
-  //   console.error(res.status, res.statusText);
-  // }
-
-  // const { player: updatedPlayer, newCells, ok } = await res.json();
-
-  // if (ok === false || newCells.length === 0) {
-  //   return;
-  // }
-  console.log(error);
-  // console.log(newLine);
-  // player = updatedPlayer;
-}
-
 function getViewport(player: Player, cells?: Cell[][]): Viewport {
   const startX = player.x - playerOffset;
   const startY = player.y - playerOffset;
@@ -184,7 +41,14 @@ function getViewport(player: Player, cells?: Cell[][]): Viewport {
 }
 
 (async () => {
-  let player = await refresh();
+  const { player: playerfromDb, viewport } = await apiFetch("login");
+
+  let player: PlayerWithViewport = {
+    ...playerfromDb,
+    viewport: getViewport(playerfromDb, viewport),
+  };
+  console.log(player);
+  render(player, dirty);
 
   process.stdin.on("keypress", async (str, key) => {
     if (loading) {
@@ -210,7 +74,11 @@ function getViewport(player: Player, cells?: Cell[][]): Viewport {
         //   saveWorld();
         //   break;
         case "r":
-          player = await refresh();
+          const { player: updatedPlayer, viewport } = await apiFetch("view");
+          player = {
+            ...updatedPlayer,
+            viewport: getViewport(updatedPlayer, viewport),
+          };
           break;
         case "n":
           dirty = !dirty;
@@ -219,7 +87,14 @@ function getViewport(player: Player, cells?: Cell[][]): Viewport {
     } else {
       // Handle directional keys
       if (directions.includes(key.name)) {
-        player = await move(player, key.name);
+        const { ok, player: updatedPlayer, newCells } = await apiFetch("move", { direction: key.name });
+
+        if (ok) {
+          player = {
+            ...updatedPlayer,
+            viewport: getViewport(updatedPlayer, moveViewport(key.name, player.viewport.cells, newCells)),
+          };
+        }
         // Ctrl + Directional : interact
         // if (key.ctrl) {
         //   interact(key.name);

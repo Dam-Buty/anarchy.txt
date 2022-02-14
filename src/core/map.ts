@@ -80,7 +80,7 @@ async function generateView(
   req: Request,
   { x: startX, y: startY, width, height }: { x: number; y: number; width: number; height: number }
 ) {
-  console.log(`Checking viewport`, { x: startX, y: startY, width, height });
+  console.log(`Generating chunks for viewport`, { x: startX, y: startY, width, height });
 
   // Get the 4 corner cells of the view
   console.time("get corners");
@@ -176,23 +176,17 @@ export function setCell(req: Request, cell: Partial<Cell>) {
 function getRectangleFromCache(
   req: Request,
   { x: startX, y: startY, width, height }: { x: number; y: number; width: number; height: number }
-): {
-  cacheMiss: boolean;
-  cells: Partial<Cell>[][];
-} {
-  let cacheMiss = false;
-
+): Partial<Cell>[][] {
   const cells = createMatrix(width, height, (x, y) => {
     const cell = getCell(req, { x: startX + x, y: startY + y });
 
     if (!cell) {
-      cacheMiss = true;
-      return null;
+      throw "cache-miss";
     }
     return cell;
   });
 
-  return { cacheMiss, cells };
+  return cells;
 }
 
 export async function getView(
@@ -201,54 +195,65 @@ export async function getView(
 ): Promise<Partial<Cell>[][]> {
   console.log(`Getting from cache`, { x: startX, y: startY, width, height });
 
-  console.time("get from cache");
-  const { cacheMiss: cacheMissFromCache, cells: cellsFromCache } = getRectangleFromCache(req, {
-    x: startX,
-    y: startY,
-    width,
-    height,
-  });
-  console.timeEnd("get from cache");
+  try {
+    const cellsFromCache = getRectangleFromCache(req, {
+      x: startX,
+      y: startY,
+      width,
+      height,
+    });
 
-  if (!cacheMissFromCache) {
-    console.log("Got the whole thing from cache 1st try !");
     return cellsFromCache;
+  } catch (exception) {
+    if (exception === "cache-miss") {
+      await generateView(req, { x: startX, y: startY, width, height });
+
+      return [];
+    }
+  }
+}
+
+export async function cacheRenderBox(
+  req: Request,
+  { corner: [startX, startY], width, height }: Rectangle
+): Promise<void> {
+  console.log(`Caching render box`, { x: startX, y: startY, width, height });
+
+  try {
+    getRectangleFromCache(req, {
+      x: startX,
+      y: startY,
+      width,
+      height,
+    });
+  } catch (exception) {
+    if (exception === "cache-miss") {
+      const { data: cells } = await req.rpc("get_rectangle", {
+        startx: startX,
+        starty: startY,
+        width,
+        height,
+      });
+
+      cells.forEach((cell) => {
+        setCell(req, cell);
+      });
+    }
   }
 
-  console.time("generate view");
-  await generateView(req, { x: startX, y: startY, width, height });
-  console.timeEnd("generate view");
-
-  console.time("reget from cache");
-  const { cells: cellsFromGenerated, cacheMiss: cacheMissFromGenerated } = getRectangleFromCache(req, {
-    x: startX,
-    y: startY,
-    width,
-    height,
-  });
-  console.timeEnd("reget from cache");
-
-  if (!cacheMissFromGenerated) {
-    console.log("Got the whole thing from cache 2nd try !");
-    return cellsFromGenerated;
-  }
-
-  console.time("fetch view");
-  const { data: cells, error } = await req.supabase.rpc<Cell>("get_rectangle", {
-    startx: startX,
-    starty: startY,
-    width,
-    height,
-  });
-  console.timeEnd("fetch view");
-
-  console.time("cache cells");
-  cells.forEach((cell) => {
-    setCell(req, cell);
-  });
-  console.timeEnd("cache cells");
-
-  return chunk(cells, width);
+  // console.log(
+  //   chain(req.map.cells)
+  //     .values()
+  //     .map((line) =>
+  //       chain(line)
+  //         .values()
+  //         .map((cell) => cell.letter)
+  //         .join(" ")
+  //         .value()
+  //     )
+  //     .join("\n")
+  //     .value()
+  // );
 }
 
 export function mapLog(map: Map, log: any) {
