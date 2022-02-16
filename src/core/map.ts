@@ -42,38 +42,26 @@ export function createMap(
   return { noise: { base, text, technology, magic }, cells: {}, logs: [] };
 }
 
-// export function getOrGenerateChunk(map: Map, { x, y }: { x: number; y: number }): Chunk {
-//   // if (!map.chunks[coord(y)]) {
-//   //   map.chunks[coord(y)] = {};
-//   // }
-//   // if (!map.chunks[coord(y)][coord(x)]) {
-//   //   // mapLog(map, JSON.stringify({ x, y }));
-//   //   map.chunks[coord(y)][coord(x)] = createChunk({ x, y }, { noise: map.noise, textNoise: map.textNoise });
-//   // }
-//   // return map.chunks[coord(y)][coord(x)];
-//   try {
-//     if (!map.chunks[coord(y)]) {
-//       map.chunks[coord(y)] = {};
-//     }
-//     if (!map.chunks[coord(y)][coord(x)]) {
-//       // mapLog(map, JSON.stringify({ x, y }));
-//       console.time("createChunk");
-//       map.chunks[coord(y)][coord(x)] = createChunk({ x, y }, map.noise);
-//       console.timeEnd("createChunk");
-//     }
-//     return map.chunks[coord(y)][coord(x)];
-//   } catch (e) {
-//     console.error(e);
-//   }
-// }
-
-// export function getCellFromChunk(map: Map, { x, y }: { x: number; y: number }): Cell {
-//   const [chunkX, chunkY] = chunkCoordinates(x, y);
-
-//   const chunk = getOrGenerateChunk(map, { x: chunkX, y: chunkY });
-
-//   return getCell(chunk, { x, y });
-// }
+async function persistChunks(req: Request, chunkCells: Partial<Cell>[][]) {
+  for (const cells of chunkCells) {
+    console.time("insert cells");
+    await req.from("cell").insert(
+      cells.map((cell) => ({
+        x: cell.x,
+        y: cell.y,
+        value: cell.value,
+        letterValue: cell.letterValue,
+        letter: cell.letter,
+        biomeName: cell.biomeName,
+        health: cell.health,
+        isNatural: cell.isNatural,
+        isPartOfStructure: cell.isPartOfStructure,
+      })),
+      { returning: "minimal" }
+    );
+    console.timeEnd("insert cells");
+  }
+}
 
 // Generate any needed chunks to render that view
 async function generateView(
@@ -114,48 +102,19 @@ async function generateView(
 
     console.log(`Generating chunks`, corners);
 
+    console.time("generate chunk");
+    let newCells: Partial<Cell>[][] = [];
     for (const [x, y] of corners) {
-      console.time("generate chunk");
       const chunk = await generateChunk({ x, y }, req.map.noise);
-      console.timeEnd("generate chunk");
 
-      console.time("cache cells");
+      newCells.push(chunk.cells.flat());
       chunk.cells.flat().forEach((cell) => {
         setCell(req, cell);
       });
-      console.timeEnd("cache cells");
-
-      console.time("insert cells");
-      req.stackPromise(
-        new Promise((resolve, reject) => {
-          req
-            .from("cell")
-            .insert(
-              chunk.cells.flat().map((cell) => ({
-                x: cell.x,
-                y: cell.y,
-                value: cell.value,
-                letterValue: cell.letterValue,
-                letter: cell.letter,
-                biomeName: cell.biomeName,
-                health: cell.health,
-                isNatural: cell.isNatural,
-                isPartOfStructure: cell.isPartOfStructure,
-              })),
-              { returning: "minimal" }
-            )
-            .then(
-              () => {
-                resolve(null);
-              },
-              (reason) => {
-                reject(reason);
-              }
-            );
-        })
-      );
-      console.timeEnd("insert cells");
     }
+    console.timeEnd("generate chunk");
+
+    persistChunks(req, newCells);
   }
 }
 
@@ -193,8 +152,6 @@ export async function getView(
   req: Request,
   { corner: [startX, startY], width, height }: Rectangle
 ): Promise<Partial<Cell>[][]> {
-  console.log(`Getting from cache`, { x: startX, y: startY, width, height });
-
   try {
     const cellsFromCache = getRectangleFromCache(req, {
       x: startX,
@@ -206,9 +163,11 @@ export async function getView(
     return cellsFromCache;
   } catch (exception) {
     if (exception === "cache-miss") {
+      console.time("whole generate");
       await generateView(req, { x: startX, y: startY, width, height });
+      console.timeEnd("whole generate");
 
-      return [];
+      return getView(req, { corner: [startX, startY], width, height });
     }
   }
 }
@@ -217,8 +176,6 @@ export async function cacheRenderBox(
   req: Request,
   { corner: [startX, startY], width, height }: Rectangle
 ): Promise<void> {
-  console.log(`Caching render box`, { x: startX, y: startY, width, height });
-
   try {
     getRectangleFromCache(req, {
       x: startX,
@@ -228,6 +185,7 @@ export async function cacheRenderBox(
     });
   } catch (exception) {
     if (exception === "cache-miss") {
+      console.log("Getting cells from db");
       const { data: cells } = await req.rpc("get_rectangle", {
         startx: startX,
         starty: startY,
@@ -240,20 +198,6 @@ export async function cacheRenderBox(
       });
     }
   }
-
-  // console.log(
-  //   chain(req.map.cells)
-  //     .values()
-  //     .map((line) =>
-  //       chain(line)
-  //         .values()
-  //         .map((cell) => cell.letter)
-  //         .join(" ")
-  //         .value()
-  //     )
-  //     .join("\n")
-  //     .value()
-  // );
 }
 
 export function mapLog(map: Map, log: any) {

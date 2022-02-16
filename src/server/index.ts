@@ -52,11 +52,13 @@ server.use(async (req, res, next) => {
   }
 
   req.stackPromise = (promise: Promise<any>) => {
+    console.time("weird");
     promises.push(
       promise.catch((err) => {
         console.error(err);
       })
     );
+    console.timeEnd("weird");
   };
 
   req.renderBox = {
@@ -139,13 +141,13 @@ server.post("/move", setNeighbors, async (req, res) => {
         };
       case "right":
         return {
-          corner: [req.player.x - playerOffset + viewportWidth, req.player.y - playerOffset],
+          corner: [req.player.x - playerOffset + viewportWidth - 1, req.player.y - playerOffset],
           width: 1,
           height: viewportHeight,
         };
       case "down":
         return {
-          corner: [req.player.x - playerOffset, req.player.y - playerOffset + viewportHeight],
+          corner: [req.player.x - playerOffset, req.player.y - playerOffset + viewportHeight - 1],
           width: viewportWidth,
           height: 1,
         };
@@ -162,7 +164,7 @@ server.post("/move", setNeighbors, async (req, res) => {
   // Cache the new renderbox
   req.cacheRenderBox(req.renderBox);
 
-  res.json({ ok: true, player: req.player, newCells });
+  res.json({ ok: true, player: req.player, newCells: newCells.flat() });
 });
 
 server.listen(8666);

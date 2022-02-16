@@ -24,23 +24,18 @@ export async function apiFetch<T extends keyof Endpoints>(
   endpoint: T,
   body?: Endpoints[typeof endpoint]["body"]
 ): Promise<Endpoints[typeof endpoint]["response"]> {
-  console.log(`${host}/${endpoint}`, {
-    method: "post",
-    body: JSON.stringify({ accessToken: access_token, ...body }),
-    headers: { "Content-Type": "application/json" },
-  });
+  console.time(`${host}/${endpoint}`);
   const res = await fetch(`${host}/${endpoint}`, {
     method: "post",
     body: JSON.stringify({ accessToken: access_token, ...body }),
     headers: { "Content-Type": "application/json" },
   });
-  console.log(res);
-
   if (!res.ok) {
     throw new Error(`API Error ${res.status} : ${res.statusText}`);
   }
 
   const response = await res.json();
 
+  console.timeEnd(`${host}/${endpoint}`);
   return response as Endpoints[typeof endpoint]["response"];
 }

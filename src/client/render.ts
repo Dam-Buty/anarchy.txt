@@ -28,6 +28,7 @@ function formatLine(player: Player, cells: Cell[]): string {
       if (!cell) {
         return chalk.red("X");
       }
+      // console.log([cell.x, player.x], [cell.y, player.y]);
       if (cell.x === player.x && cell.y === player.y) {
         console.log(666, Math.abs(Math.round(((player.x % playerModel.length) + (player.y % playerModel.length)) / 2)));
         return playerModel[

@@ -47,7 +47,7 @@ function getViewport(player: Player, cells?: Cell[][]): Viewport {
     ...playerfromDb,
     viewport: getViewport(playerfromDb, viewport),
   };
-  console.log(player);
+
   render(player, dirty);
 
   process.stdin.on("keypress", async (str, key) => {
