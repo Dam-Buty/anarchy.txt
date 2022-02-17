@@ -7,6 +7,8 @@ import { Direction, Rectangle } from "../lib/utils";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Cell, From, makeSupabase, Player, Rpc } from "../lib/supabase";
 import { playerOffset, renderOffset } from "../lib/constants";
+import EventEmitter from "events";
+import { dispatcher } from "./middleware/dispatcher";
 const server = restify.createServer();
 
 server.use(restify.plugins.bodyParser());
@@ -28,6 +30,7 @@ declare module "restify" {
     supabase: SupabaseClient;
     rpc: Rpc;
     from: From;
+    dispatcher: EventEmitter;
     map: Map;
     renderBox: Rectangle;
     viewBox: Rectangle;
@@ -39,6 +42,7 @@ declare module "restify" {
 }
 
 let promises: Promise<any>[] = [];
+
 const { supabase, from, rpc } = makeSupabase();
 
 server.use(authenticate);
@@ -46,6 +50,7 @@ server.use(async (req, res, next) => {
   req.supabase = supabase;
   req.from = from;
   req.rpc = rpc;
+  req.dispatcher = dispatcher;
 
   if (!req.player) {
     return next();
@@ -122,7 +127,7 @@ function setNeighbors(req: restify.Request, res: restify.Response, next: restify
   next();
 }
 
-server.post("/move", setNeighbors, async (req, res) => {
+server.post("/move", authenticated, setNeighbors, async (req, res) => {
   const direction: Direction = req.body.direction;
 
   if (!isWalkable(req.neighbors[direction])) {

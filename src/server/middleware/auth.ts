@@ -59,13 +59,16 @@ export async function authenticate(req: Request, res: Response, next: Next) {
 
   // Try to authenticate the player from the memory cache
   if (playerId) {
-    req.player = livePlayers[authCache[accessToken]].player;
+    console.log("Authenticating user from cache");
+    req.player = livePlayers[playerId].player;
     livePlayers[authCache[accessToken]].lastUpdated = new Date();
     return next();
   }
 
-  // Try to authenticate against the database
+  console.log("Authenticating user from database");
+  // Try to authenticate using the access token to connect to the database
   const { from } = makeSupabase(accessToken);
+  // An authenticated player can only select their own row
   const { data: player, error } = await from("player")
     .select(
       `
@@ -90,9 +93,9 @@ export async function authenticate(req: Request, res: Response, next: Next) {
     return res.send(401, "Unauthorized");
   }
 
-  // Cache the player
+  // Cache the player's access token
   authCache[accessToken] = player.id;
-  livePlayers[player.id] = { player, lastUpdated: new Date() };
+  updateLivePlayer(player);
   req.player = player;
 
   next();
@@ -131,8 +134,13 @@ export function movePlayer(req: Request, direction: Direction) {
     height: viewportHeight,
   };
 
-  livePlayers[req.player.id] = {
-    player: req.player,
+  updateLivePlayer(req.player);
+  req.dispatcher.emit("player", { req, player: req.player });
+}
+
+function updateLivePlayer(player: Player) {
+  livePlayers[player.id] = {
+    player,
     lastUpdated: new Date(),
   };
 }

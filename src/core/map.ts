@@ -103,18 +103,16 @@ async function generateView(
     console.log(`Generating chunks`, corners);
 
     console.time("generate chunk");
-    let newCells: Partial<Cell>[][] = [];
     for (const [x, y] of corners) {
       const chunk = await generateChunk({ x, y }, req.map.noise);
 
-      newCells.push(chunk.cells.flat());
       chunk.cells.flat().forEach((cell) => {
         setCell(req, cell);
       });
+
+      req.dispatcher.emit("cells", { req, cells: chunk.cells.flat() });
     }
     console.timeEnd("generate chunk");
-
-    persistChunks(req, newCells);
   }
 }
 
@@ -140,6 +138,8 @@ function getRectangleFromCache(
     const cell = getCell(req, { x: startX + x, y: startY + y });
 
     if (!cell) {
+      console.log(req.map.cells[y]);
+      console.log("Missed cache for cell", { inMatrix: { x, y }, inWorld: { x: startX + x, y: startY + y } });
       throw "cache-miss";
     }
     return cell;
