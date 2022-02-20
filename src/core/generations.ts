@@ -5,74 +5,27 @@ import { chooseWithNoise, Coords, createMatrix, fill, getRectangle, isInRectangl
 import { Biome, biomeCache } from "./biome";
 import { isAmbiance, isPath, pathModel } from "./cell";
 
-export function addStructures(cells: Partial<Cell>[][], structureCandidates: Coords[]) {
-  // Generate structures
-  const structuresCache: Coords[] = [];
-  structureCandidates
-    // Filter out candidates that are too close to the border of the chunk
-    .filter(
-      ([x, y]) =>
-        x > structureMargin &&
-        x < chunkWidth - structureMargin &&
-        y > structureMargin &&
-        y < chunkHeight - structureMargin
-    )
-    // Filter candidates that are too close to other candidates
-    .filter(([x, y]) => {
-      if (
-        structuresCache.find((structure) =>
-          isInRectangle([x, y], {
-            corner: [x - structureMargin / 2, y - structureMargin / 2],
-            width: structureMargin,
-            height: structureMargin,
-          })
-        )
-      ) {
-        return false;
-      }
-      structuresCache.push([x, y]);
-      return true;
-    })
-    .forEach(([x, y]) => {
-      const possibleStructures: [number, number][] = [
-        [5, 7],
-        [7, 5],
-        [9, 6],
-        [10, 8],
-        [14, 12],
-      ];
+export function addStructures(cells: Partial<Cell>[][], structureCandidates: Partial<Cell>[]) {
+  chain(structureCandidates)
+    .sortBy((cell) => cell.value)
+    .forEach((cell) => {
+      const biome: Biome = biomeCache[cell.biomeName];
 
-      // For each remaining candidate we'll try every possible structure, and pick the one with the highest coverage ratio
-      const possibleStructure = chain(possibleStructures)
-        .map(([width, height]) => {
-          const corner: Coords = [x - Math.floor(width / 2), y - Math.floor(height / 2)];
-          const rectangle = getRectangle(cells, { corner, width, height });
+      const structure = chooseWithNoise(biome.txt.structures, cell.letterValue);
 
-          return {
-            width,
-            height,
-            corner,
-            rectangle,
-            score: sumBy(flatMap(rectangle), (cell) => cell.value),
-          };
-        })
-        .maxBy("score")
-        .value();
-      const workingThreshold = possibleStructure.width * possibleStructure.height * structureScoreThreshold;
+      // Normalize the structure by ensuring it is a full rectangle
+      const width = Math.max(...structure.split("\n").map((line) => line.length));
+      const normalizedStructure = structure.split("\n").map((line) => line.padEnd(width, pathModel));
 
-      if (possibleStructure.score > workingThreshold) {
-        // Chose structure
-        const cell = cells[y][x];
-        const biome: Biome = biomeCache[cell.biomeName];
+      const rectangle: Rectangle = {
+        corner: [cell.x - Math.floor(width / 2), cell.y - Math.floor(normalizedStructure.length / 2)],
+        width,
+        height: normalizedStructure.length,
+      };
 
-        const structure = chooseWithNoise(biome.txt.structures, cell.letterValue);
+      const rectangleCells = getRectangle(cells, rectangle);
 
-        drawStructure(possibleStructure.rectangle, structure, {
-          corner: possibleStructure.corner,
-          width: possibleStructure.width,
-          height: possibleStructure.height,
-        });
-      }
+      drawStructure(rectangleCells, normalizedStructure.join("\n"), rectangle);
     });
 }
 
@@ -159,28 +112,17 @@ export function fitText(text: string, rectangle: Rectangle): string[][] {
   return chunk(paddedString.split(""), usableWidth).slice(0, usableHeight);
 }
 
-export function drawStructure(cells: Partial<Cell>[][], text: string, rectangle: Rectangle): Partial<Cell>[][] {
-  // Prepare the string for display in the rectangle
-  const textLines = fitText(text, rectangle);
-
-  return createMatrix(rectangle.width, rectangle.height, (x, y) => {
+export function drawStructure(cells: Partial<Cell>[][], text: string, rectangle: Rectangle) {
+  createMatrix(rectangle.width, rectangle.height, (x, y) => {
+    const textLines = text.split("\n").map((line) => line.split(""));
     const cell = cells[y][x];
     const biome = biomeCache[cell.biomeName];
     cell.isPartOfStructure = true;
 
     // Determine characters for this cell
     const possibleLetters = (() => {
-      // Identify if this cell is part of the frame of the rectangle
-      const frameLetters = getPossibleLettersForStructureFrame(cell, text, [x, y], rectangle);
-
-      if (frameLetters?.length) {
-        return frameLetters;
-      }
-
       // Otherwise just pick the corresponding letter in the text lines
-      const letterX = x - 1;
-      const letterY = y - 1;
-      const letter = textLines[letterY][letterX];
+      const letter = textLines[y][x];
       const variant = biome.alphabet.rares[letter] || letter;
       // Handle decay depending on the original type of the cell
       if (isPath(cell)) {
@@ -192,7 +134,9 @@ export function drawStructure(cells: Partial<Cell>[][], text: string, rectangle:
       return [...fill(27).of(letter), ...fill(1).of("."), ...fill(5).of(variant)];
     })();
 
-    // Choose the letter with the right normalizer
+    // Choose the letter from the options we have
+    // You have to normalize the value otherwise you wouldn't be choosing from all the options
+    // (for example all paths would have value < 0 so you'd only be choosing from the first half of the array)
     cell.letter = (() => {
       if (isPath(cell)) {
         return chooseWithNoise(possibleLetters, cell.value, biome.normalizers.path);

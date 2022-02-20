@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "tsnd src --ignore-watch=player.json --ignore-watch=world.json",
-    "client": "tsnd src/client",
-    "server": "source ./.env && tsnd src/server",
-    "types:refresh": "source ./.env && openapi-typescript $SUPABASE_URL/rest/v1/?apikey=$SUPABASE_KEY --output ./src/core/models.ts"
+    "client": "source ./.client.env && tsnd src/client",
+    "server": "source ./.server.env && tsnd src/server",
+    "types:refresh": "source ./.client.env && openapi-typescript $SUPABASE_URL/rest/v1/?apikey=$SUPABASE_KEY --output ./src/core/models.ts"
   },
   "author": "Damien Buty <dam.buty@gmail.com>",
   "license": "MIT",

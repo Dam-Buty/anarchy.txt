@@ -37,7 +37,6 @@ declare module "restify" {
     neighbors: Record<Direction, Partial<Cell>>;
     cacheRenderBox: (options?: Rectangle) => Promise<void>;
     getView: (options?: Rectangle) => Promise<Partial<Cell>[][]>;
-    stackPromise: (promise: Promise<any>) => void;
   }
 }
 
@@ -55,16 +54,6 @@ server.use(async (req, res, next) => {
   if (!req.player) {
     return next();
   }
-
-  req.stackPromise = (promise: Promise<any>) => {
-    console.time("weird");
-    promises.push(
-      promise.catch((err) => {
-        console.error(err);
-      })
-    );
-    console.timeEnd("weird");
-  };
 
   req.renderBox = {
     corner: [req.player.x - renderOffset, req.player.y - renderOffset],
@@ -130,9 +119,9 @@ function setNeighbors(req: restify.Request, res: restify.Response, next: restify
 server.post("/move", authenticated, setNeighbors, async (req, res) => {
   const direction: Direction = req.body.direction;
 
-  if (!isWalkable(req.neighbors[direction])) {
-    return res.json({ ok: false });
-  }
+  // if (!isWalkable(req.neighbors[direction])) {
+  //   return res.json({ ok: false });
+  // }
 
   movePlayer(req, direction);
 

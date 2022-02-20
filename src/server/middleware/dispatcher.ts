@@ -12,20 +12,20 @@ dispatcher.on("cells", async ({ req, cells }: { req: Request; cells: Cell[] }) =
   console.time(`persisting ${cells.length} cells ${i}`);
   for (const chunkCells of chunk(cells, 1000)) {
     console.log(`Persisting ${chunkCells.length} cells`);
-    await req.from("cell").insert(
-      chunkCells.map((cell) => ({
-        x: cell.x,
-        y: cell.y,
-        value: cell.value,
-        letterValue: cell.letterValue,
-        letter: cell.letter,
-        biomeName: cell.biomeName,
-        health: cell.health,
-        isNatural: cell.isNatural,
-        isPartOfStructure: cell.isPartOfStructure,
-      })),
-      { returning: "minimal" }
-    );
+    // await req.from("cell").insert(
+    //   chunkCells.map((cell) => ({
+    //     x: cell.x,
+    //     y: cell.y,
+    //     value: cell.value,
+    //     letterValue: cell.letterValue,
+    //     letter: cell.letter,
+    //     biomeName: cell.biomeName,
+    //     health: cell.health,
+    //     isNatural: cell.isNatural,
+    //     isPartOfStructure: cell.isPartOfStructure,
+    //   })),
+    //   { returning: "minimal" }
+    // );
   }
   console.timeEnd(`persisting ${cells.length} cells ${i}`);
 });
