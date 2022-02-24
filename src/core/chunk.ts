@@ -22,32 +22,31 @@ export async function generateChunk({ x, y }: Pick<Chunk, "x" | "y">, noise: Noi
 
   const structureCandidates: Partial<Cell>[] = [];
   // Generate the base text layer
-  const cells = createMatrix(chunkWidth, chunkHeight, (cellX, cellY) => {
-    const cell = createCell({ x: cellX + startX, y: cellY + startY }, noise);
+  const cells = createMatrix(chunkWidth, chunkHeight, (localX, localY) => {
+    const cell = createCell({ x: localX + startX, y: localY + startY }, noise);
     // Check if this cell is a candidate to seed a structure
     if (cell.value > structureValueThreshold) {
       // It needs to be far enough from the borders of the chunk
       const hasSafeChunkMargin =
-        cellX > structureMargin &&
-        cellX < chunkWidth - structureMargin &&
-        cellY > structureMargin &&
-        cellY < chunkHeight - structureMargin;
+        localX > structureMargin &&
+        localX < chunkWidth - structureMargin &&
+        localY > structureMargin &&
+        localY < chunkHeight - structureMargin;
       // And from any other structure candidate
       const hasSafeStructureMargin = !structureCandidates.find((structure) =>
-        isInRectangle([cellX, cellY], {
-          corner: [structure.x - structureMargin / 2, structure.y - structureMargin / 2],
+        isInRectangle([structure.x, structure.y], {
+          corner: [cell.x - structureMargin / 2, cell.y - structureMargin / 2],
           width: structureMargin,
           height: structureMargin,
         })
       );
-      console.log(cellX, cellY, hasSafeChunkMargin, hasSafeStructureMargin);
+
       if (hasSafeChunkMargin && hasSafeStructureMargin) {
         structureCandidates.push(cell);
       }
     }
     return cell;
   });
-  console.log(structureCandidates);
   addStructures(cells, structureCandidates);
 
   return { x, y, realX: x * chunkWidth, realY: y * chunkHeight, cells };

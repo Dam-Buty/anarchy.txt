@@ -1,5 +1,6 @@
-import { BiomeSpec } from "../../core/biome";
-import { fill } from "../../lib/utils";
+import { BiomeSpec } from "../../../core/biome";
+import { fill } from "../../../lib/utils";
+import { structures } from "./structures";
 
 // unused
 // [...fill(10).of("╭"), ...fill(10).of("╯"), ...fill(10).of("╮"), ...fill(10).of("╰")],
@@ -17,10 +18,12 @@ export const hollowmen: BiomeSpec = {
     rareFloor: 0.9,
   },
 
+  structures,
+
   ambiance: [
-    [...fill(50).of("."), ...fill(10).of("𑀇")],
-    [...fill(10).of("𐂩"), ...fill(4).of("𐂷")],
-    [...fill(4).of("𐃦"), ...fill(4).of("ඉ"), ...fill(4).of("ළ"), ...fill(4).of("ඝ")],
+    [...fill(45).of("."), ...fill(15).of("𑀇"), ...fill(1).of("𐂷")],
+    [...fill(10).of("𐂩"), ...fill(4).of("𐂐")],
+    [...fill(4).of("𐃡"), ...fill(4).of("𐃓"), ...fill(4).of("𐃤"), ...fill(4).of("𐃰")],
   ],
   rares: {
     a: "ȃ",
@@ -34,40 +37,9 @@ export const hollowmen: BiomeSpec = {
     m: "ᙢ",
     o: "ㆆ",
     p: "Ᵽ",
-    s: "ᔖ",
+    // s: "ᔖ",
     u: "u𑨶",
   },
-  structures: [
-    "We are the hollow men",
-    "We are the stuffed men",
-    "Shape without form",
-    "shade without colour",
-    "Paralysed force",
-    "gesture without motion",
-    "not as lost Violent souls",
-    "In death's dream kingdom",
-    "Rat's coat crowskin crossed staves",
-    "Behaving as the wind behaves",
-    "Not that final meeting",
-    "In the twilight kingdom",
-    "This is the dead land This is cactus land",
-    "Here the stone images Are raised",
-    "The supplication of a dead man's hand",
-    "Under the twinkle of a fading star",
-    "Waking alone",
-    "Trembling with tenderness",
-    "Form prayers to broken stone",
-    "The eyes are not here",
-    "There are no eyes here",
-    "In this valley of dying stars",
-    "This broken jaw of our lost kingdoms",
-    "In this last of meeting places",
-    "Here we go round the prickly pear",
-    "This is the way the world ends",
-    "This is the way the world ends",
-    "This is the way the world ends",
-    "Not with a bang but a whimper",
-  ],
   txt: `Mistah Kurtz he dead
   A penny for the Old Guy
   We are the hollow men

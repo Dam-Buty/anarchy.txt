@@ -48,8 +48,8 @@ export function createMatrix<T>(width: number, height: number, callback: (x: num
     );
 }
 
-export function mapMatrix<T, U>(matrix: T[][], callback: (element: T) => U): U[][] {
-  return matrix.map((line) => line.map((cell) => callback(cell)));
+export function mapMatrix<T, U>(matrix: T[][], callback: (element: T, local: Coords) => U): U[][] {
+  return matrix.map((line, y) => line.map((cell, x) => callback(cell, [x, y])));
 }
 
 export type Rectangle = { corner: Coords; width: number; height: number };
@@ -65,8 +65,11 @@ export function isInRectangle(
 }
 
 export function getRectangle<T>(array: T[][], rectangle: Rectangle): T[][] {
-  const [x, y] = rectangle.corner;
-  return array.slice(y, y + rectangle.height).map((line) => line.slice(x, x + rectangle.width));
+  // Normalize global coordinates to local coordinates
+  const [globalX, globalY] = rectangle.corner;
+  const localX = globalX % chunkWidth;
+  const localY = globalY % chunkHeight;
+  return array.slice(localY, localY + rectangle.height).map((line) => line.slice(localX, localX + rectangle.width));
 }
 
 export function moveViewport(direction: Direction, viewport: Cell[][], newSet: Cell[]): Cell[][] {

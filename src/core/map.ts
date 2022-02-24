@@ -138,7 +138,6 @@ function getRectangleFromCache(
     const cell = getCell(req, { x: startX + x, y: startY + y });
 
     if (!cell) {
-      console.log(req.map.cells[y]);
       console.log("Missed cache for cell", { inMatrix: { x, y }, inWorld: { x: startX + x, y: startY + y } });
       throw "cache-miss";
     }

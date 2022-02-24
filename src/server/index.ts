@@ -158,6 +158,8 @@ server.post("/move", authenticated, setNeighbors, async (req, res) => {
   // Cache the new renderbox
   req.cacheRenderBox(req.renderBox);
 
+  console.log(getCell(req, { x: req.player.x, y: req.player.y }));
+
   res.json({ ok: true, player: req.player, newCells: newCells.flat() });
 });
 

@@ -1,0 +1,37 @@
+export const structures = [
+  "We are the hollow men",
+  "We are the stuffed men",
+  "Shape without form",
+  "shade without colour",
+  "Paralysed force",
+  "gesture without motion",
+  `𐀪𐀪𐀪 not as 𐂛 lost 𐂛 violent 𐂛 souls 𐀪𐀪𐀪`,
+  "In death's dream kingdom",
+  "Rat's coat",
+  "crowskin",
+  "crossed staves",
+  "Behaving as the wind behaves",
+  "Not that final meeting",
+  "In the twilight kingdom",
+  `This is the dead land
+This is   cactus land`,
+  `        𐀪𐀪𐀪 𐃦      𐃦 𐀪𐀪𐀪
+                𐃓     
+        𐀪𐀪𐀪 𐃠     𐃠 𐀪𐀪𐀪
+ here the stone images are raised`,
+  "The supplication of a dead man's hand",
+  "Under the twinkle of a fading star",
+  "Waking alone",
+  "Trembling with tenderness",
+  "𐃉 Form prayers to broken stone 𐃋",
+  "The eyes are not here",
+  "There are no eyes here",
+  "In this valley of dying stars",
+  "This broken jaw of our lost kingdoms",
+  "In this last of meeting places",
+  "Here we go round the prickly pear",
+  "This is the way the world ends",
+  "This is the way the world ends",
+  "This is the way the world ends",
+  "Not with a bang but a whimper",
+];

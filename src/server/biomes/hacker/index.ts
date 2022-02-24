@@ -6,7 +6,7 @@ export const hacker: BiomeSpec = {
   name: "hacker",
 
   parameters: {
-    scaleFactor: { x: 24, y: 64 },
+    scaleFactor: { x: 44, y: 64 },
 
     pathCeiling: 0,
     ambianceCeiling: 0.35,

@@ -77,10 +77,9 @@ export const isAlphabetOrRare = biomeChecker(
 );
 export const isRare = biomeChecker((biome, letter) => Object.values(biome.alphabet.rares).includes(letter));
 export const isAmbiance = biomeChecker((biome, letter) => biome.alphabet.ambiance.includes(letter));
-export const isPath = (cell) => cell.letter === pathModel;
-export const isWalkable = (cell: Cell) => {
-  return [pathModel, " "].includes(cell.letter);
-};
+
+export const isPath = ({ letter }: Partial<Cell>) => letter === pathModel;
+export const isWalkable = ({ letter }: Partial<Cell>) => [pathModel, " "].includes(letter);
 
 // export function place(player: Player, cell: Cell): boolean {
 //   if (!player.inInventory || player.inventory.length <= player.hand) {
