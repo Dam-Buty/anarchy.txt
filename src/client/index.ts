@@ -99,20 +99,7 @@ function getViewport(player: Player, cells?: Cell[][]): Viewport {
         // if (key.ctrl) {
         //   interact(key.name);
         // } else {
-        //   // Navigate in inventory
-        //   if (player.inInventory) {
-        //     switch (key.name) {
-        //       case "left":
-        //         player.hand = Math.max(0, player.hand - 1);
-        //         break;
-        //       case "right":
-        //         player.hand = Math.min(player.inventory.length - 1, player.hand + 1);
-        //         break;
-        //     }
-        //   } else {
-        //     // Normal movement
-        //     move(key.name);
-        //   }
+        //
         // }
       }
     }

@@ -6,7 +6,7 @@ import { Request } from "restify";
 import { definitions, paths } from "../core/models";
 
 export type Stack = definitions["stack"];
-export type Player = definitions["player"] & { stack: Stack };
+export type Player = definitions["player"] & { stacks: Stack[] };
 export type Cell = definitions["cell"];
 
 export type GetCorners = paths["/rpc/get_corners"];

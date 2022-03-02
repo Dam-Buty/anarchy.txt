@@ -2,13 +2,14 @@ import restify from "restify";
 
 import { cacheRenderBox, createMap, getCell, getView, Map } from "../core/map";
 import { authenticate, frontPage, movePlayer, oauthPage } from "./middleware/auth";
-import { pathModel } from "../core/cell";
+import { isAlphabet, isAmbiance, isRare, pathModel } from "../core/cell";
 import { Direction, Rectangle } from "../lib/utils";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Cell, From, makeSupabase, Player, Rpc } from "../lib/supabase";
 import { playerOffset, renderOffset } from "../lib/constants";
 import EventEmitter from "events";
 import { dispatcher } from "./middleware/dispatcher";
+import { addToInventory } from "../core/player";
 const server = restify.createServer();
 
 server.use(restify.plugins.bodyParser());
@@ -67,7 +68,7 @@ server.use(async (req, res, next) => {
   };
 
   req.map = map;
-  req.cacheRenderBox = (options = req.renderBox) => cacheRenderBox(req, options);
+  req.cacheRenderBox = (rectangle = req.renderBox) => cacheRenderBox(req, rectangle);
   req.getView = (options = req.viewBox) => getView(req, options);
   next();
 });
@@ -119,9 +120,9 @@ function setNeighbors(req: restify.Request, res: restify.Response, next: restify
 server.post("/move", authenticated, setNeighbors, async (req, res) => {
   const direction: Direction = req.body.direction;
 
-  // if (!isWalkable(req.neighbors[direction])) {
-  //   return res.json({ ok: false });
-  // }
+  if (!isWalkable(req.neighbors[direction])) {
+    return res.json({ ok: false });
+  }
 
   movePlayer(req, direction);
 
@@ -156,11 +157,37 @@ server.post("/move", authenticated, setNeighbors, async (req, res) => {
   const newCells = await req.getView(newViewport);
 
   // Cache the new renderbox
-  req.cacheRenderBox(req.renderBox);
-
-  console.log(getCell(req, { x: req.player.x, y: req.player.y }));
+  req.cacheRenderBox();
 
   res.json({ ok: true, player: req.player, newCells: newCells.flat() });
+});
+
+server.post("/interact", authenticated, setNeighbors, async (req, res) => {
+  const direction: Direction = req.body.direction;
+
+  if (isWalkable(req.neighbors[direction])) {
+    return res.json({ ok: false });
+  }
+
+  const target = req.neighbors[direction];
+
+  if (isAmbiance(target)) {
+    target.health -= 34;
+  }
+  if (isAlphabet(target)) {
+    target.health -= 25;
+  }
+  if (isRare(target)) {
+    target.health -= 20;
+  }
+
+  if (target.health <= 0) {
+    await addToInventory(req, target);
+    target.health = 100;
+    target.letter = " ";
+  }
+
+  req.dispatcher.emit("cells", { req, cells: [target] });
 });
 
 server.listen(8666);

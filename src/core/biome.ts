@@ -5,6 +5,7 @@ import { hollowmen } from "../server/biomes/hollowmen";
 import { NormalizeOptions } from "../lib/utils";
 import { NoiseCollection } from "./map";
 import { Cell } from "../lib/supabase";
+import { raven } from "../server/biomes/raven";
 
 type GenerationParameters = {
   scaleFactor: { x: number; y: number };
@@ -13,7 +14,7 @@ type GenerationParameters = {
   rareFloor: number;
 };
 
-export type BiomeName = "hacker" | "hollowmen";
+export type BiomeName = "hacker" | "hollowmen" | "raven";
 
 export type Biome = {
   name: BiomeName;
@@ -102,7 +103,7 @@ export const biomeCache = {
   howl: parseBiomeSpec(hollowmen),
   hacker: parseBiomeSpec(hacker),
   hollowmen: parseBiomeSpec(hollowmen),
-  raven: parseBiomeSpec(hollowmen),
+  raven: parseBiomeSpec(raven),
 };
 
 function selectBiome(technologyValue: number, magicValue: number): Biome {
@@ -125,7 +126,7 @@ function selectBiome(technologyValue: number, magicValue: number): Biome {
   }
 }
 
-const biomeScaleFactor = 1600;
+const biomeScaleFactor = 1000;
 
 export function getBiome({ x, y }: Pick<Cell, "x" | "y">, noise: NoiseCollection): Biome {
   const technologyValue = noise.technology.noise2D(x / biomeScaleFactor, y / biomeScaleFactor);

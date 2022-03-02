@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { PlayerWithViewport } from ".";
-import { playerModel } from "../core/player";
 import { Cell, Player } from "../lib/supabase";
+import { playerModel } from "./constants";
 
 function formatCell(cell: Cell): string {
   if (cell.isPartOfStructure) {
