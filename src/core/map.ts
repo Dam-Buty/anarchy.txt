@@ -10,7 +10,7 @@ export type NoiseCollection = {
   base: SimplexNoise;
   text: SimplexNoise;
   technology: SimplexNoise;
-  magic: SimplexNoise;
+  order: SimplexNoise;
 };
 
 export type Map = {
@@ -32,14 +32,14 @@ export function combineSeeds(seed: string, bias: string) {
 
 export function createMap(
   seed: string,
-  { textBias, technologyBias, magicBias }: { textBias: string; technologyBias: string; magicBias: string }
+  { textBias, technologyBias, orderBias }: { textBias: string; technologyBias: string; orderBias: string }
 ): Map {
   const base = new SimplexNoise(seed);
   const text = new SimplexNoise(combineSeeds(seed, textBias));
   const technology = new SimplexNoise(combineSeeds(seed, technologyBias));
-  const magic = new SimplexNoise(combineSeeds(seed, magicBias));
+  const order = new SimplexNoise(combineSeeds(seed, orderBias));
 
-  return { noise: { base, text, technology, magic }, cells: {}, logs: [] };
+  return { noise: { base, text, technology, order }, cells: {}, logs: [] };
 }
 
 async function persistChunks(req: Request, chunkCells: Partial<Cell>[][]) {

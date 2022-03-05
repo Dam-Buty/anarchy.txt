@@ -1,16 +1,6 @@
-import { chain, chunk, flatMap, sortBy, sumBy } from "lodash";
-import { chunkHeight, chunkWidth, structureMargin, structureScoreThreshold } from "../lib/constants";
+import { sortBy } from "lodash";
 import { Cell } from "../lib/supabase";
-import {
-  chooseWithNoise,
-  Coords,
-  createMatrix,
-  fill,
-  getRectangle,
-  isInRectangle,
-  mapMatrix,
-  Rectangle,
-} from "../lib/utils";
+import { chooseWithNoise, fill, getRectangle, mapMatrix, Rectangle } from "../lib/utils";
 import { Biome, biomeCache } from "./biome";
 import { isAmbiance, isPath, pathModel } from "./cell";
 

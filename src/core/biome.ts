@@ -106,22 +106,22 @@ export const biomeCache = {
   raven: parseBiomeSpec(raven),
 };
 
-function selectBiome(technologyValue: number, magicValue: number): Biome {
+function selectBiome(technologyValue: number, orderValue: number): Biome {
   if (technologyValue > 0) {
-    if (magicValue > 0) {
-      // Howl
-      return biomeCache.howl;
-    } else {
+    if (orderValue > 0) {
       // Hacker manifesto
       return biomeCache.hacker;
+    } else {
+      // Howl
+      return biomeCache.howl;
     }
   } else {
-    if (magicValue > 0) {
-      // Hollowmen
-      return biomeCache.hollowmen;
-    } else {
+    if (orderValue > 0) {
       // The raven
       return biomeCache.raven;
+    } else {
+      // Hollowmen
+      return biomeCache.hollowmen;
     }
   }
 }
@@ -130,7 +130,7 @@ const biomeScaleFactor = 1000;
 
 export function getBiome({ x, y }: Pick<Cell, "x" | "y">, noise: NoiseCollection): Biome {
   const technologyValue = noise.technology.noise2D(x / biomeScaleFactor, y / biomeScaleFactor);
-  const magicValue = noise.magic.noise2D(x / biomeScaleFactor, y / biomeScaleFactor);
+  const orderValue = noise.order.noise2D(x / biomeScaleFactor, y / biomeScaleFactor);
 
-  return selectBiome(technologyValue, magicValue);
+  return selectBiome(technologyValue, orderValue);
 }

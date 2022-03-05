@@ -18,6 +18,14 @@ type Endpoints = {
     body: { direction: Direction };
     response: { ok: boolean; player: Player; newCells: Cell[] };
   };
+  interact: {
+    body: { direction: Direction };
+    response: { ok: boolean; player: Player; updatedCell: Cell };
+  };
+  place: {
+    body: { direction: Direction; item: string };
+    response: { ok: boolean; player: Player; updatedCell: Cell };
+  };
 };
 
 export async function apiFetch<T extends keyof Endpoints>(

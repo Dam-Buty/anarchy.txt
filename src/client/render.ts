@@ -1,6 +1,8 @@
 import chalk from "chalk";
+import { chain } from "lodash";
 import { PlayerWithViewport } from ".";
 import { Cell, Player } from "../lib/supabase";
+import { getUnicodeBlock } from "../lib/unicode-blocks";
 import { playerModel } from "./constants";
 
 function formatCell(cell: Cell): string {
@@ -38,11 +40,49 @@ function formatLine(player: Player, cells: Cell[]): string {
     .join(" ");
 }
 
-export function render(player: PlayerWithViewport, dirty = false) {
+export function render(
+  player: PlayerWithViewport,
+  { dirty, inInventory, hand }: { dirty: boolean; inInventory: boolean; hand: number }
+) {
   const { viewport } = player;
   if (!dirty) {
     console.clear();
   }
   console.log(player.x, player.y, dirty ? "D" : "");
   console.log(viewport.cells.map((line) => formatLine(player, line)).join("\n"));
+  console.log();
+  console.log("Inventory");
+  console.log(
+    chain(player.stack)
+      .groupBy((stack) => getUnicodeBlock(stack.item))
+      .values()
+      .map((inventoryLine) =>
+        inventoryLine
+          .map(({ item, size }, slot) => {
+            // if (slot === hand) {
+            //   if (inInventory) {
+            //     return chalk.bgBlack(chalk.white(`${item} (${size})`));
+            //   } else {
+            //     return chalk.underline(`${item} (${size})`);
+            //   }
+            // }
+            return `${item} (${size})`;
+          })
+          .join(" / ")
+      )
+      .value()
+      .join("\n")
+  );
+  // player.stack
+  //   .map(({ item, size }, slot) => {
+  //     if (slot === hand) {
+  //       if (inInventory) {
+  //         return chalk.bgBlack(chalk.white(`${item} (${size})`));
+  //       } else {
+  //         return chalk.underline(`${item} (${size})`);
+  //       }
+  //     }
+  //     return `${item} (${size})`;
+  //   })
+  //   .join(" / ");
 }

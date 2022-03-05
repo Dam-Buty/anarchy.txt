@@ -40,71 +40,136 @@ function getViewport(player: Player, cells?: Cell[][]): Viewport {
   };
 }
 
+function setCellInViewport(player: PlayerWithViewport, cell: Cell) {
+  const startX = player.x - playerOffset;
+  const startY = player.y - playerOffset;
+
+  player.viewport.cells[cell.y - startY][cell.x - startX] = cell;
+}
+
 (async () => {
   const { player: playerfromDb, viewport } = await apiFetch("login");
+  let inInventory = false;
+  let hand = 0;
 
   let player: PlayerWithViewport = {
     ...playerfromDb,
     viewport: getViewport(playerfromDb, viewport),
   };
 
-  render(player, dirty);
+  const doRender = () => {
+    render(player, { dirty, inInventory, hand });
+  };
+
+  doRender();
 
   process.stdin.on("keypress", async (str, key) => {
     if (loading) {
       return null;
     }
     loading = true;
-    console.log(key);
-    // Toggle inventory mode
-    // if (key.sequence === "<" && player.inventory.length > 0) {
-    //   player.inInventory = !player.inInventory;
-    // }
+    // console.log(key);
 
-    // Handle CTRL+X hotkeys
-    if (key.ctrl) {
-      switch (key.name) {
-        case "c":
-          if (key.ctrl) {
-            process.exit(0);
-          }
-          break;
-
-        // case "s":
-        //   saveWorld();
-        //   break;
-        case "r":
-          const { player: updatedPlayer, viewport } = await apiFetch("view");
-          player = {
-            ...updatedPlayer,
-            viewport: getViewport(updatedPlayer, viewport),
-          };
-          break;
-        case "n":
-          dirty = !dirty;
-          break;
-      }
-    } else {
-      // Handle directional keys
-      if (directions.includes(key.name)) {
-        const { ok, player: updatedPlayer, newCells } = await apiFetch("move", { direction: key.name });
-
-        if (ok) {
-          player = {
-            ...updatedPlayer,
-            viewport: getViewport(updatedPlayer, moveViewport(key.name, player.viewport.cells, newCells)),
-          };
-        }
-        // Ctrl + Directional : interact
-        // if (key.ctrl) {
-        //   interact(key.name);
-        // } else {
-        //
-        // }
+    if (key.name === "space") {
+      if (player.stack.length === 0) {
+        inInventory = false;
+      } else {
+        inInventory = !inInventory;
       }
     }
 
-    render(player, dirty);
+    if (inInventory) {
+      /**
+       * Inventory mode
+       */
+      switch (key.name) {
+        case "left":
+          hand = Math.max(hand - 1, 0);
+          break;
+        case "right":
+          hand = Math.min(hand + 1, player.stack.length - 1);
+          break;
+      }
+    } else {
+      if (key.ctrl) {
+        /**
+         * Interact mode
+         */
+        if (directions.includes(key.name)) {
+          const { ok, player: updatedPlayer, updatedCell } = await apiFetch("interact", { direction: key.name });
+
+          if (ok) {
+            setCellInViewport(player, updatedCell);
+            player = {
+              ...updatedPlayer,
+              viewport: player.viewport,
+            };
+          }
+        } else {
+          /**
+           * Key binds
+           */
+          switch (key.name) {
+            case "c":
+              if (key.ctrl) {
+                process.exit(0);
+              }
+              break;
+
+            // case "s":
+            //   saveWorld();
+            //   break;
+            case "r":
+              const { player: updatedPlayer, viewport } = await apiFetch("view");
+              player = {
+                ...updatedPlayer,
+                viewport: getViewport(updatedPlayer, viewport),
+              };
+              break;
+            case "n":
+              dirty = !dirty;
+              break;
+          }
+        }
+        // Handle shift + X ()
+      } else if (key.shift) {
+        /**
+         * Place mode
+         */
+        if (directions.includes(key.name)) {
+          const {
+            ok,
+            player: updatedPlayer,
+            updatedCell,
+          } = await apiFetch("place", { direction: key.name, item: player.stack[hand].item });
+
+          if (ok) {
+            setCellInViewport(player, updatedCell);
+            player = {
+              ...updatedPlayer,
+              viewport: player.viewport,
+            };
+          }
+        }
+      } else {
+        /**
+         * Move mode
+         */
+        if (directions.includes(key.name)) {
+          const { ok, player: updatedPlayer, newCells } = await apiFetch("move", { direction: key.name });
+
+          if (ok) {
+            player = {
+              ...updatedPlayer,
+              viewport: getViewport(updatedPlayer, moveViewport(key.name, player.viewport.cells, newCells)),
+            };
+          }
+        }
+      }
+    }
+
+    doRender();
+
     loading = false;
   });
 })().catch((err) => {

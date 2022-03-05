@@ -9,7 +9,8 @@ import { Cell, From, makeSupabase, Player, Rpc } from "../lib/supabase";
 import { playerOffset, renderOffset } from "../lib/constants";
 import EventEmitter from "events";
 import { dispatcher } from "./middleware/dispatcher";
-import { addToInventory } from "../core/player";
+import { addToInventory, takeFromInventory } from "../core/player";
+import { omit } from "lodash";
 const server = restify.createServer();
 
 server.use(restify.plugins.bodyParser());
@@ -18,9 +19,9 @@ server.use(restify.plugins.queryParser());
 const worldSeed = "with the absolute heart of the poem of life butchered out of their own bodies";
 const textBias = "GOOD TO EAT a thousand years";
 const technologyBias = "the world of the electron and the switch, the beauty of the baud";
-const magicBias = "Lips that would kiss Form prayers to broken stone";
+const orderBias = "Lips that would kiss Form prayers to broken stone";
 
-const map = createMap(worldSeed, { textBias, technologyBias, magicBias });
+const map = createMap(worldSeed, { textBias, technologyBias, orderBias });
 
 const viewportWidth = 60;
 const viewportHeight = 40;
@@ -40,8 +41,6 @@ declare module "restify" {
     getView: (options?: Rectangle) => Promise<Partial<Cell>[][]>;
   }
 }
-
-let promises: Promise<any>[] = [];
 
 const { supabase, from, rpc } = makeSupabase();
 
@@ -171,6 +170,12 @@ server.post("/interact", authenticated, setNeighbors, async (req, res) => {
 
   const target = req.neighbors[direction];
 
+  console.log(target);
+
+  if (!target.isNatural) {
+    target.health -= target.placedById === req.player.id ? 45 : 25;
+  }
+
   if (isAmbiance(target)) {
     target.health -= 34;
   }
@@ -188,6 +193,36 @@ server.post("/interact", authenticated, setNeighbors, async (req, res) => {
   }
 
   req.dispatcher.emit("cells", { req, cells: [target] });
+
+  res.json({ ok: true, player: req.player, updatedCell: target });
+});
+
+server.post("/place", authenticated, setNeighbors, async (req, res) => {
+  const direction: Direction = req.body.direction;
+  const item: string = req.body.item;
+
+  if (!isWalkable(req.neighbors[direction])) {
+    return res.json({ ok: false });
+  }
+
+  const target = req.neighbors[direction];
+
+  // Confirm the player has the item in their inventory
+  const confirm = takeFromInventory(req, item);
+
+  if (!confirm) {
+    return res.json({ ok: false });
+  }
+
+  target.health = 100;
+  target.letter = item;
+  target.isNatural = false;
+  target.placedAt = new Date().toISOString();
+  target.placedById = req.player.id;
+
+  req.dispatcher.emit("cells", { req, cells: [target] });
+
+  res.json({ ok: true, player: req.player, updatedCell: target });
 });
 
 server.listen(8666);
