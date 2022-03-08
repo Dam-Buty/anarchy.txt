@@ -60,8 +60,9 @@ function sortInventory(inventory: Stack[]): Inventory {
     viewport: getViewport(playerfromDb, viewport),
     inventory: sortInventory(playerfromDb.stack),
   };
+  const inventoryKeys = keys(player.inventory);
 
-  let handRow: keyof PlayerWithViewport["inventory"];
+  let handRow: keyof PlayerWithViewport["inventory"] = inventoryKeys[0];
   let handSlot: number;
 
   const doRender = () => {
@@ -85,8 +86,6 @@ function sortInventory(inventory: Stack[]): Inventory {
         inInventory = !inInventory;
       }
     }
-
-    const inventoryKeys = keys(player.inventory);
 
     if (inInventory) {
       /**
