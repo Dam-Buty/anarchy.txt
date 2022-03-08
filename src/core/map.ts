@@ -1,10 +1,10 @@
+import { chain, isEqual } from "lodash";
 import murmurhash from "murmurhash";
-import SimplexNoise from "simplex-noise";
 import { Request } from "restify";
-import { generateChunk } from "./chunk";
-import { chunkCoordinates, createMatrix, Rectangle } from "../lib/utils";
-import { chain, chunk, isEqual, map } from "lodash";
+import SimplexNoise from "simplex-noise";
 import { Cell } from "../lib/supabase";
+import { chunkCoordinates, createMatrix, Rectangle } from "../lib/utils";
+import { generateChunk } from "./chunk";
 
 export type NoiseCollection = {
   base: SimplexNoise;

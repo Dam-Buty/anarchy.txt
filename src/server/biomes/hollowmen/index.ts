@@ -3,11 +3,6 @@ import { fill } from "../../../lib/utils";
 import { structures } from "./structures";
 import { txt } from "./txt";
 
-// unused
-// [...fill(10).of("╭"), ...fill(10).of("╯"), ...fill(10).of("╮"), ...fill(10).of("╰")],
-//  ...fill(10).of("෴")
-// ...fill(4).of("𐁗"),
-
 export const hollowmen: BiomeSpec = {
   name: "hollowmen",
 

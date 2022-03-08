@@ -1,15 +1,12 @@
+import { chain, keys } from "lodash";
 import readline from "readline";
-import fetch from "node-fetch";
-
-import { Direction, directions, moveViewport } from "../lib/utils";
-
-import { render } from "./render";
-import { Cell, Player } from "../lib/supabase";
-import { fetchPlayer, fetchView, rpc } from "./supabase";
 import { playerOffset } from "../lib/constants";
-import { chunk } from "lodash";
-import { host, viewportHeight, viewportWidth } from "./constants";
+import { Cell, Player, Stack } from "../lib/supabase";
+import { getUnicodeBlock } from "../lib/unicode-blocks";
+import { directions, moveViewport } from "../lib/utils";
 import { apiFetch } from "./api";
+import { viewportHeight, viewportWidth } from "./constants";
+import { render } from "./render";
 
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
@@ -25,7 +22,8 @@ export type Viewport = {
   cells: Cell[][];
 };
 
-export type PlayerWithViewport = Player & { viewport: Viewport };
+type Inventory = Record<string, Stack[]>;
+export type PlayerWithViewport = Player & { viewport: Viewport; inventory: Inventory };
 
 function getViewport(player: Player, cells?: Cell[][]): Viewport {
   const startX = player.x - playerOffset;
@@ -47,18 +45,27 @@ function setCellInViewport(player: PlayerWithViewport, cell: Cell) {
   player.viewport.cells[cell.y - startY][cell.x - startX] = cell;
 }
 
+function sortInventory(inventory: Stack[]): Inventory {
+  return chain(inventory)
+    .groupBy((stack) => getUnicodeBlock(stack.item))
+    .value();
+}
+
 (async () => {
   const { player: playerfromDb, viewport } = await apiFetch("login");
   let inInventory = false;
-  let hand = 0;
 
   let player: PlayerWithViewport = {
     ...playerfromDb,
     viewport: getViewport(playerfromDb, viewport),
+    inventory: sortInventory(playerfromDb.stack),
   };
 
+  let handRow: keyof PlayerWithViewport["inventory"];
+  let handSlot: number;
+
   const doRender = () => {
-    render(player, { dirty, inInventory, hand });
+    render(player, { dirty, inInventory, handRow, handSlot });
   };
 
   doRender();
@@ -70,6 +77,7 @@ function setCellInViewport(player: PlayerWithViewport, cell: Cell) {
     loading = true;
     // console.log(key);
 
+    // Space bar toggles inventory mode
     if (key.name === "space") {
       if (player.stack.length === 0) {
         inInventory = false;
@@ -78,16 +86,30 @@ function setCellInViewport(player: PlayerWithViewport, cell: Cell) {
       }
     }
 
+    const inventoryKeys = keys(player.inventory);
+
     if (inInventory) {
       /**
        * Inventory mode
        */
       switch (key.name) {
         case "left":
-          hand = Math.max(hand - 1, 0);
+          handSlot = Math.max(handSlot[0] - 1, 0);
           break;
         case "right":
-          hand = Math.min(hand + 1, player.stack.length - 1);
+          handSlot = Math.min(handSlot[0] + 1, player.inventory[handRow].length - 1);
+          break;
+        case "up":
+          const currentKeyIndex = inventoryKeys.indexOf(handRow);
+          const previousKeyIndex = Math.max(currentKeyIndex - 1, 0);
+          handRow = inventoryKeys[previousKeyIndex];
+          handSlot = Math.min(handSlot, player.inventory[handRow].length - 1);
+          break;
+        case "down":
+          const currentKeyIndex_ = inventoryKeys.indexOf(handRow);
+          const nextKeyIndex = Math.min(currentKeyIndex_ + 1, inventoryKeys.length - 1);
+          handRow = inventoryKeys[nextKeyIndex];
+          handSlot = Math.min(handSlot, player.inventory[handRow].length - 1);
           break;
       }
     } else {
@@ -103,6 +125,7 @@ function setCellInViewport(player: PlayerWithViewport, cell: Cell) {
             player = {
               ...updatedPlayer,
               viewport: player.viewport,
+              inventory: sortInventory(updatedPlayer.stack),
             };
           }
         } else {
@@ -115,15 +138,12 @@ function setCellInViewport(player: PlayerWithViewport, cell: Cell) {
                 process.exit(0);
               }
               break;
-
-            // case "s":
-            //   saveWorld();
-            //   break;
             case "r":
               const { player: updatedPlayer, viewport } = await apiFetch("view");
               player = {
                 ...updatedPlayer,
                 viewport: getViewport(updatedPlayer, viewport),
+                inventory: sortInventory(updatedPlayer.stack),
               };
               break;
             case "n":
@@ -131,7 +151,6 @@ function setCellInViewport(player: PlayerWithViewport, cell: Cell) {
               break;
           }
         }
-        // Handle shift + X ()
       } else if (key.shift) {
         /**
          * Place mode
@@ -141,13 +160,14 @@ function setCellInViewport(player: PlayerWithViewport, cell: Cell) {
             ok,
             player: updatedPlayer,
             updatedCell,
-          } = await apiFetch("place", { direction: key.name, item: player.stack[hand].item });
+          } = await apiFetch("place", { direction: key.name, item: player.inventory[handRow][handSlot].item });
 
           if (ok) {
             setCellInViewport(player, updatedCell);
             player = {
               ...updatedPlayer,
               viewport: player.viewport,
+              inventory: sortInventory(updatedPlayer.stack),
             };
           }
         }
@@ -162,6 +182,7 @@ function setCellInViewport(player: PlayerWithViewport, cell: Cell) {
             player = {
               ...updatedPlayer,
               viewport: getViewport(updatedPlayer, moveViewport(key.name, player.viewport.cells, newCells)),
+              inventory: sortInventory(updatedPlayer.stack),
             };
           }
         }

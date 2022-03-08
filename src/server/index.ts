@@ -1,16 +1,15 @@
-import restify from "restify";
-
-import { cacheRenderBox, createMap, getCell, getView, Map } from "../core/map";
-import { authenticate, frontPage, movePlayer, oauthPage } from "./middleware/auth";
-import { isAlphabet, isAmbiance, isRare, pathModel } from "../core/cell";
-import { Direction, Rectangle } from "../lib/utils";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Cell, From, makeSupabase, Player, Rpc } from "../lib/supabase";
-import { playerOffset, renderOffset } from "../lib/constants";
 import EventEmitter from "events";
-import { dispatcher } from "./middleware/dispatcher";
+import restify from "restify";
+import { isAlphabet, isAmbiance, isRare, pathModel } from "../core/cell";
+import { cacheRenderBox, createMap, getCell, getView, Map } from "../core/map";
 import { addToInventory, takeFromInventory } from "../core/player";
-import { omit } from "lodash";
+import { playerOffset, renderOffset } from "../lib/constants";
+import { Cell, From, makeSupabase, Player, Rpc } from "../lib/supabase";
+import { Direction, Rectangle } from "../lib/utils";
+import { authenticate, frontPage, movePlayer, oauthPage } from "./middleware/auth";
+import { dispatcher } from "./middleware/dispatcher";
+
 const server = restify.createServer();
 
 server.use(restify.plugins.bodyParser());
@@ -226,7 +225,3 @@ server.post("/place", authenticated, setNeighbors, async (req, res) => {
 });
 
 server.listen(8666);
-
-// setInterval(() => {
-//   console.log(mapValues(process.memoryUsage(), (value) => `${(value / (1024 * 1024)).toFixed(2)} Mb`));
-// }, 2000);

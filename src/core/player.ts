@@ -1,18 +1,6 @@
 import { Request } from "restify";
 import { Cell } from "../lib/supabase";
 
-// export type Player = {
-//   x: number;
-//   y: number;
-
-//   inventory: {
-//     letter: string;
-//     stack: number;
-//   }[];
-//   hand: number;
-//   inInventory: boolean;
-// };
-
 export async function addToInventory(req: Request, cell: Partial<Cell>) {
   const existingStack = req.player.stack.find((stack) => stack.item === cell.letter);
 

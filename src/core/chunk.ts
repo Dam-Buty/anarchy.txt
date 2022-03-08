@@ -1,6 +1,6 @@
 import { chunkHeight, chunkWidth, structureMargin, structureValueThreshold } from "../lib/constants";
 import { Cell } from "../lib/supabase";
-import { Coords, createMatrix, isInRectangle } from "../lib/utils";
+import { createMatrix, isInRectangle } from "../lib/utils";
 import { createCell } from "./cell";
 import { addStructures } from "./generations";
 import { NoiseCollection } from "./map";
@@ -51,14 +51,3 @@ export async function generateChunk({ x, y }: Pick<Chunk, "x" | "y">, noise: Noi
 
   return { x, y, realX: x * chunkWidth, realY: y * chunkHeight, cells };
 }
-
-// export function getCell(chunk: Chunk, { x, y }: { x: number; y: number }): Cell {
-//   if (y < chunk.realY || y > chunk.realY + chunkHeight || x < chunk.realX || x > chunk.realX + chunkWidth) {
-//     throw new Error(`Cell [${x},${y}] out of bounds for chunk [${chunk.x},${chunk.y}]`);
-//   }
-
-//   const cellXInChunk = x - chunk.realX;
-//   const cellYInChunk = y - chunk.realY;
-
-//   return chunk.cells[cellYInChunk][cellXInChunk];
-// }

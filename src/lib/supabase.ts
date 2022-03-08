@@ -1,8 +1,6 @@
 import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
 import { createClient } from "@supabase/supabase-js";
 import { SupabaseQueryBuilder } from "@supabase/supabase-js/dist/main/lib/SupabaseQueryBuilder";
-import { Request } from "restify";
-
 import { definitions, paths } from "../core/models";
 
 export type Stack = definitions["stack"];

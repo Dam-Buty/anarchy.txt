@@ -1,7 +1,7 @@
-import { Request } from "restify";
 import EventEmitter from "events";
+import { chunk, partition, pick } from "lodash";
+import { Request } from "restify";
 import { Cell, Player } from "../../lib/supabase";
-import { chunk, omit, partition, pick } from "lodash";
 
 export const dispatcher = new EventEmitter();
 
