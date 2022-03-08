@@ -1,9 +1,10 @@
-import { uniq } from "lodash";
 import shuffle from "knuth-shuffle-seeded";
-import { hacker } from "../biomes/hacker";
-import { hollowmen } from "../biomes/hollowmen";
+import { uniq } from "lodash";
+import { Cell } from "../lib/supabase";
 import { NormalizeOptions } from "../lib/utils";
-import { Cell } from "./cell";
+import { hacker } from "../server/biomes/hacker";
+import { hollowmen } from "../server/biomes/hollowmen";
+import { raven } from "../server/biomes/raven";
 import { NoiseCollection } from "./map";
 
 type GenerationParameters = {
@@ -13,7 +14,11 @@ type GenerationParameters = {
   rareFloor: number;
 };
 
+export type BiomeName = "hacker" | "hollowmen" | "raven";
+
 export type Biome = {
+  name: BiomeName;
+
   txt: {
     raw: string;
     lines: string[];
@@ -37,6 +42,8 @@ export type Biome = {
 };
 
 export type BiomeSpec = {
+  name: BiomeName;
+
   parameters: GenerationParameters;
 
   ambiance: string[][];
@@ -51,6 +58,7 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 function parseBiomeSpec(biomeSpec: BiomeSpec): Biome {
+  console.log(`Parsing biome ${biomeSpec.name}`);
   const rawTxt = biomeSpec.txt;
   const lines = rawTxt.split("\n");
   const fullAlphabet = lines.join("").split("");
@@ -68,6 +76,7 @@ function parseBiomeSpec(biomeSpec: BiomeSpec): Biome {
   });
 
   const biome: Biome = {
+    name: biomeSpec.name,
     txt: {
       raw: rawTxt,
       lines,
@@ -90,38 +99,38 @@ function parseBiomeSpec(biomeSpec: BiomeSpec): Biome {
   return biome;
 }
 
-const biomeCache = {
+export const biomeCache = {
   howl: parseBiomeSpec(hollowmen),
   hacker: parseBiomeSpec(hacker),
   hollowmen: parseBiomeSpec(hollowmen),
-  raven: parseBiomeSpec(hollowmen),
+  raven: parseBiomeSpec(raven),
 };
 
-function selectBiome(technologyValue: number, magicValue: number): Biome {
+function selectBiome(technologyValue: number, orderValue: number): Biome {
   if (technologyValue > 0) {
-    if (magicValue > 0) {
-      // Howl
-      return biomeCache.howl;
-    } else {
+    if (orderValue > 0) {
       // Hacker manifesto
       return biomeCache.hacker;
+    } else {
+      // Howl
+      return biomeCache.howl;
     }
   } else {
-    if (magicValue > 0) {
-      // Hollowmen
-      return biomeCache.hollowmen;
-    } else {
+    if (orderValue > 0) {
       // The raven
       return biomeCache.raven;
+    } else {
+      // Hollowmen
+      return biomeCache.hollowmen;
     }
   }
 }
 
-const biomeScaleFactor = 1600;
+const biomeScaleFactor = 1000;
 
 export function getBiome({ x, y }: Pick<Cell, "x" | "y">, noise: NoiseCollection): Biome {
   const technologyValue = noise.technology.noise2D(x / biomeScaleFactor, y / biomeScaleFactor);
-  const magicValue = noise.magic.noise2D(x / biomeScaleFactor, y / biomeScaleFactor);
+  const orderValue = noise.order.noise2D(x / biomeScaleFactor, y / biomeScaleFactor);
 
-  return selectBiome(technologyValue, magicValue);
+  return selectBiome(technologyValue, orderValue);
 }

@@ -1,31 +1,37 @@
-import * as player from "../../player.json";
+import { Request } from "restify";
+import { Cell } from "../lib/supabase";
 
-export const playerModel = ["𐛩", "𐛪", "𐛧", "𐛫", "𐛪", "𐛧"];
-
-export type Player = {
-  x: number;
-  y: number;
-
-  inventory: {
-    letter: string;
-    stack: number;
-  }[];
-  hand: number;
-  inInventory: boolean;
-};
-
-export function createPlayer(): Player {
-  let [playerX, playerY] = player.position;
-
-  return { x: playerX, y: playerY, inventory: [], hand: 0, inInventory: false };
-}
-
-export function addToInventory(player: Player, letter: string) {
-  const existingStack = player.inventory.find((item) => item.letter === letter);
+export async function addToInventory(req: Request, cell: Partial<Cell>) {
+  const existingStack = req.player.stack.find((stack) => stack.item === cell.letter);
 
   if (existingStack) {
-    existingStack.stack++;
+    existingStack.size++;
+    await req.from("stack").update({ size: existingStack.size }).eq("id", existingStack.id);
   } else {
-    player.inventory.push({ letter, stack: 1 });
+    const { data: newStack } = await req
+      .from("stack")
+      .insert({ item: cell.letter, size: 1, playerId: req.player.id })
+      .single();
+    req.player.stack.push(newStack);
   }
+}
+
+export async function takeFromInventory(req: Request, item: string) {
+  const existingStack = req.player.stack.find((stack) => stack.item === item);
+
+  if (!existingStack) {
+    return null;
+  }
+
+  existingStack.size--;
+
+  // If the stack is empty remove it from the inventory
+  if (existingStack.size === 0) {
+    req.player.stack = req.player.stack.filter((stack) => stack.item !== item);
+    await req.from("stack").delete().eq("id", existingStack.id);
+  } else {
+    await req.from("stack").update({ size: existingStack.size }).eq("id", existingStack.id);
+  }
+
+  return existingStack.item;
 }

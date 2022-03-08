@@ -1,0 +1,72 @@
+import { BiomeSpec } from "../../../core/biome";
+import { fill } from "../../../lib/utils";
+import { structures } from "./structures";
+import { txt } from "./txt";
+
+export const raven: BiomeSpec = {
+  name: "raven",
+
+  parameters: {
+    scaleFactor: { x: 44, y: 64 },
+
+    pathCeiling: 0,
+    ambianceCeiling: 0.35,
+    rareFloor: 0.85,
+  },
+
+  ambiance: [
+    [...fill(50).of("·"), ...fill(10).of("🜛"), ...fill(10).of("🜨"), ...fill(10).of("🜙"), ...fill(10).of("🝧")],
+    [...fill(10).of("🜁"), ...fill(10).of("🜂"), ...fill(10).of("🜃"), ...fill(10).of("🜄")],
+    [...fill(4).of("🜩"), ...fill(4).of("🜪"), ...fill(4).of("🜟")],
+  ],
+  rares: {
+    a: "𝒶",
+    b: "𝒷",
+    c: "𝒸",
+    d: "𝒹",
+    f: "𝒻",
+    h: "𝒽",
+    i: "𝒾",
+    j: "𝒿",
+    k: "𝓀",
+    l: "𝓁",
+    m: "𝓂",
+    n: "𝓃",
+    p: "𝓅",
+    q: "𝓆",
+    r: "𝓇",
+    s: "𝓈",
+    t: "𝓉",
+    u: "𝓊",
+    v: "𝓋",
+    w: "𝓌",
+    x: "𝓍",
+    y: "𝓎",
+    z: "𝓏",
+    A: "𝒜",
+    B: "ß",
+    C: "𝒞",
+    D: "𝒟",
+    E: "𝔈",
+    F: "𝔉",
+    G: "𝒢",
+    J: "𝒥",
+    K: "𝒦",
+    L: "𝔏",
+    M: "𝔐",
+    N: "𝒩",
+    O: "𝒪",
+    P: "𝒫",
+    Q: "𝒬",
+    S: "𝒮",
+    T: "𝒯",
+    U: "𝒰",
+    V: "𝒱",
+    W: "𝒲",
+    X: "𝒳",
+    Y: "𝒴",
+    Z: "𝒵",
+  },
+  structures,
+  txt,
+};
