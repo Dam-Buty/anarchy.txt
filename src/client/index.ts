@@ -63,7 +63,7 @@ function sortInventory(inventory: Stack[]): Inventory {
   const inventoryKeys = keys(player.inventory);
 
   let handRow: keyof PlayerWithViewport["inventory"] = inventoryKeys[0];
-  let handSlot: number;
+  let handSlot: number = 0;
 
   const doRender = () => {
     render(player, { dirty, inInventory, handRow, handSlot });
@@ -93,10 +93,10 @@ function sortInventory(inventory: Stack[]): Inventory {
        */
       switch (key.name) {
         case "left":
-          handSlot = Math.max(handSlot[0] - 1, 0);
+          handSlot = Math.max(handSlot - 1, 0);
           break;
         case "right":
-          handSlot = Math.min(handSlot[0] + 1, player.inventory[handRow].length - 1);
+          handSlot = Math.min(handSlot + 1, player.inventory[handRow].length - 1);
           break;
         case "up":
           const currentKeyIndex = inventoryKeys.indexOf(handRow);
